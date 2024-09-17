@@ -10,6 +10,68 @@ function Login() {
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
+    // Función para verificar si el usuario ya registró asistencia hoy
+    const checkAttendance = async (userId) => {
+        const token = localStorage.getItem('token');
+
+        try {
+            const response = await fetch(`http://localhost:4000/api/attendance/today/${userId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Error al verificar la asistencia');
+            }
+
+            const attendanceData = await response.json();
+            return attendanceData; // Retorna los datos de asistencia
+        } catch (error) {
+            console.error('Error en la verificación de asistencia:', error);
+            setError('No se pudo verificar la asistencia.');
+            return null; // Retorna null en caso de error
+        }
+    };
+
+    // Función para registrar la asistencia (check-in)
+    const registerAttendance = async (userId) => {
+        const token = localStorage.getItem('token');
+
+        // Obtener la fecha y hora actual en formato ISO
+        const checkInTime = new Date().toISOString();
+
+        // Establecer una ubicación estática o dinámica
+        const location = {
+            lat: 9.067326498950038, // Reemplaza con valores dinámicos si es necesario
+            lng: -79.38772760260268,
+        };
+
+        try {
+            const responseAttendance = await fetch(`http://localhost:4000/api/attendance`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    check_in: checkInTime,
+                    location: location,
+                }),
+            });
+
+            if (!responseAttendance.ok) {
+                throw new Error('Error al registrar la asistencia');
+            }
+
+            console.log('Asistencia registrada:', await responseAttendance.json());
+        } catch (error) {
+            console.error('Error en el registro de asistencia:', error);
+            setError('No se pudo registrar la asistencia.');
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -21,32 +83,34 @@ function Login() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    username: username,
-                    password: password,
-                }),
+                body: JSON.stringify({ username, password }),
             });
 
             const data = await response.json();
             setLoading(false);
 
             if (response.ok && data.accessToken) {
-                console.log('Login success:', data);
-
-                // Guardar el accessToken, refreshToken y el rol en localStorage
+                // Guardar tokens en localStorage
                 localStorage.setItem('token', data.accessToken);
                 localStorage.setItem('refreshToken', data.refreshToken);
-                localStorage.setItem('role', data.role);
+                localStorage.setItem('role', data.user.role);
+
+                // Verificar si ya registró asistencia hoy
+                const attendanceData = await checkAttendance(data.user.id);
+
+                if (attendanceData && !attendanceData.attendanceExists) {
+                    // Si no hay registro, registrar asistencia
+                    await registerAttendance(data.user.id);
+                    console.log('Asistencia registrada después del inicio de sesión.');
+                } else if (attendanceData && attendanceData.attendanceExists) {
+                    console.log('El usuario ya tiene registro de asistencia hoy:', attendanceData);
+                }
 
                 // Redirigir según el rol del usuario
-                const role = data.role;
-
-                if (role === 'admin') {
-                    navigate('/dashboard');
-                } else if (role === 'user') {
-                    navigate('/homeUser');
+                if (data.user.role === 'user') {
+                    navigate('/attendance');
                 } else {
-                    console.log('No tienes los permisos necesarios para acceder a esta área.');
+                    setError('No tienes los permisos necesarios para acceder.');
                 }
             } else {
                 setError(data.message || 'Credenciales incorrectas');
@@ -54,7 +118,6 @@ function Login() {
         } catch (error) {
             setLoading(false);
             setError('Error de conexión. Inténtalo de nuevo.');
-            console.error('Connection error:', error);
         }
     };
 
