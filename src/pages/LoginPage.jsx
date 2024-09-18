@@ -2,12 +2,16 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Lock } from 'lucide-react';
 import logo from '../assets/logo.jpg';
+import GeolocationCheck from '../Components/General/GeolocationCheck'; //Se importo el componente de FeolocationCheck -Andy
+import LocationMap from '../Components/General/LocationMap'; // Se importo el componente de LocationMap -Andy
 
 function Login() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [isLocationChecked, setIsLocationChecked] = useState(false);
+    const [userPosition, setUserPosition] = useState(null); // To store user's position
     const navigate = useNavigate();
 
     // Función para verificar si el usuario ya registró asistencia hoy
@@ -26,7 +30,7 @@ function Login() {
             }
 
             const attendanceData = await response.json();
-            return attendanceData; // Retorna los datos de asistencia
+            return attendanceData; // Retorna los datos de asistencoa
         } catch (error) {
             console.error('Error en la verificación de asistencia:', error);
             setError('No se pudo verificar la asistencia.');
@@ -41,11 +45,8 @@ function Login() {
         // Obtener la fecha y hora actual en formato ISO
         const checkInTime = new Date().toISOString();
 
-        // Establecer una ubicación estática o dinámica
-        const location = {
-            lat: 9.067326498950038, // Reemplaza con valores dinámicos si es necesario
-            lng: -79.38772760260268,
-        };
+        // Establecer una ubicacion estatica o Dinamica
+        const location = userPosition; // Se hicieron cambios para que guarde la geolocation del check -Andy
 
         try {
             const responseAttendance = await fetch(`http://localhost:4000/api/attendance`, {
@@ -72,6 +73,18 @@ function Login() {
         }
     };
 
+    // Funcion que maneja el output positivo de GeolocationCheck -Andy
+    const handleLocationSuccess = (position) => {
+        setIsLocationChecked(true); // Designa el check como positivo -Andy
+        setUserPosition(position); // Guarda la posicion del usuario -Andy
+    };
+
+    // Funcion que maneja el geolocation fallido -Andy
+    const handleLocationFailure = () => {
+        setError('No estás dentro del área designada para iniciar turno.');
+        setIsLocationChecked(false); // Reinicia el location Check State
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -90,16 +103,16 @@ function Login() {
             setLoading(false);
 
             if (response.ok && data.accessToken) {
-                // Guardar tokens en localStorage
+                // Guarda los tokens el LocalStorage
                 localStorage.setItem('token', data.accessToken);
                 localStorage.setItem('refreshToken', data.refreshToken);
                 localStorage.setItem('role', data.user.role);
 
-                // Verificar si ya registró asistencia hoy
+                // Verificar si ya se registro asistencia hoy
                 const attendanceData = await checkAttendance(data.user.id);
 
                 if (attendanceData && !attendanceData.attendanceExists) {
-                    // Si no hay registro, registrar asistencia
+                    /// Si no hay registro, registrar asistencia
                     await registerAttendance(data.user.id);
                     console.log('Asistencia registrada después del inicio de sesión.');
                 } else if (attendanceData && attendanceData.attendanceExists) {
@@ -127,38 +140,58 @@ function Login() {
                 <div className="flex justify-center mb-6">
                     <img src={logo} alt="Logo" className="w-24 h-24" />
                 </div>
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-4 flex items-center">
-                        <User className="text-gray-700 mr-2" />
-                        <input
-                            type="text"
-                            placeholder="Username"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                            required
-                        />
-                    </div>
-                    <div className="mb-6 flex items-center">
-                        <Lock className="text-gray-700 mr-2" />
-                        <input
-                            type="password"
-                            placeholder="Password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                            required
-                        />
-                    </div>
-                    {error && <p className="text-red-500 text-xs italic">{error}</p>}
-                    <button
-                        type="submit"
-                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full"
-                        disabled={loading}
-                    >
-                        {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
-                    </button>
-                </form>
+
+                {/* Renderiza GeolocationCheck antes de mostrar el login form */}
+                {!isLocationChecked ? (
+                    <GeolocationCheck 
+                        desiredArea={{
+                            minLat: 9.061274114226507,   // Ajusta estos valores segun el area necesaria -Andy
+                            maxLat: 9.068140872874764,
+                            minLon: -79.39165233216502,
+                            maxLon: -79.38659580540434,
+                        }} 
+                        onSuccess={handleLocationSuccess} 
+                        onFailure={handleLocationFailure} 
+                    />
+                ) : (
+                    <>
+                        {error && <p className="text-red-500 text-xs italic">{error}</p>}
+                        {userPosition && <LocationMap position={userPosition} />} {/* Muestra el mapa si el Check Falla */}
+
+                        <form onSubmit={handleSubmit}>
+                            <div className="mb-4 flex items-center">
+                                <User className="text-gray-700 mr-2" />
+                                <input
+                                    type="text"
+                                    placeholder="Username"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                    required
+                                />
+                            </div>
+                            <div className="mb-6 flex items-center">
+                                <Lock className="text-gray-700 mr-2" />
+                                <input
+                                    type="password"
+                                    placeholder="Password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                    required
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full"
+                                disabled={loading}
+                            >
+                                {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
+                            </button>
+                        </form>
+                    </>
+                )}
+                
             </div>
         </div>
     );
