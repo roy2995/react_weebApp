@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Lock } from 'lucide-react';
 import logo from '../assets/logo.jpg';
-import GeolocationCheck from '../Components/General/GeolocationCheck'; //Se importo el componente de FeolocationCheck -Andy
+import GeolocationCheck from '../Components/General/GeolocationCheck'; //Se importo el componente de GeolocationCheck -Andy
 import LocationMap from '../Components/General/LocationMap'; // Se importo el componente de LocationMap -Andy
 
 function Login() {
@@ -15,63 +15,68 @@ function Login() {
     const navigate = useNavigate();
 
     // Función para verificar si el usuario ya registró asistencia hoy
-    const checkAttendance = async (userId) => {
-        const token = localStorage.getItem('token');
+const checkAttendance = async (userId) => {
+    const token = localStorage.getItem('token');
 
-        try {
-            const response = await fetch(`http://localhost:4000/api/attendance/today/${userId}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+    try {
+        // Cambiamos las comillas por backticks para la interpolación de variables
+        const response = await fetch(`http://localhost:4000/api/attendance/today/${userId}`, {
+            headers: {
+                // También aquí corregimos la interpolación
+                Authorization: `Bearer ${token}`,
+            },
+        });
 
-            if (!response.ok) {
-                throw new Error('Error al verificar la asistencia');
-            }
-
-            const attendanceData = await response.json();
-            return attendanceData; // Retorna los datos de asistencoa
-        } catch (error) {
-            console.error('Error en la verificación de asistencia:', error);
-            setError('No se pudo verificar la asistencia.');
-            return null; // Retorna null en caso de error
+        if (!response.ok) {
+            throw new Error('Error al verificar la asistencia');
         }
-    };
 
-    // Función para registrar la asistencia (check-in)
-    const registerAttendance = async (userId) => {
-        const token = localStorage.getItem('token');
+        const attendanceData = await response.json();
+        return attendanceData; // Retorna los datos de asistencia
+    } catch (error) {
+        console.error('Error en la verificación de asistencia:', error);
+        setError('No se pudo verificar la asistencia.');
+        return null; // Retorna null en caso de error
+    }
+};
 
-        // Obtener la fecha y hora actual en formato ISO
-        const checkInTime = new Date().toISOString();
+// Función para registrar la asistencia (check-in)
+const registerAttendance = async (userId) => {
+    const token = localStorage.getItem('token');
 
-        // Establecer una ubicacion estatica o Dinamica
-        const location = userPosition; // Se hicieron cambios para que guarde la geolocation del check -Andy
+    // Obtener la fecha y hora actual en formato ISO
+    const checkInTime = new Date().toISOString();
 
-        try {
-            const responseAttendance = await fetch(`http://localhost:4000/api/attendance`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    user_id: userId,
-                    check_in: checkInTime,
-                    location: location,
-                }),
-            });
+    // Establecer una ubicacion estatica o Dinamica
+    const location = userPosition; // Se hicieron cambios para que guarde la geolocation del check -Andy
 
-            if (!responseAttendance.ok) {
-                throw new Error('Error al registrar la asistencia');
-            }
+    try {
+        // Cambiamos las comillas por backticks para la interpolación de variables
+        const responseAttendance = await fetch(`http://localhost:4000/api/attendance`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                // También aquí corregimos la interpolación
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+                user_id: userId,
+                check_in: checkInTime,
+                location: location,
+            }),
+        });
 
-            console.log('Asistencia registrada:', await responseAttendance.json());
-        } catch (error) {
-            console.error('Error en el registro de asistencia:', error);
-            setError('No se pudo registrar la asistencia.');
+        if (!responseAttendance.ok) {
+            throw new Error('Error al registrar la asistencia');
         }
-    };
+
+        console.log('Asistencia registrada:', await responseAttendance.json());
+    } catch (error) {
+        console.error('Error en el registro de asistencia:', error);
+        setError('No se pudo registrar la asistencia.');
+    }
+};
+
 
     // Funcion que maneja el output positivo de GeolocationCheck -Andy
     const handleLocationSuccess = (position) => {
@@ -112,7 +117,7 @@ function Login() {
                 const attendanceData = await checkAttendance(data.user.id);
 
                 if (attendanceData && !attendanceData.attendanceExists) {
-                    /// Si no hay registro, registrar asistencia
+                    // Si no hay registro, registrar asistencia
                     await registerAttendance(data.user.id);
                     console.log('Asistencia registrada después del inicio de sesión.');
                 } else if (attendanceData && attendanceData.attendanceExists) {
@@ -135,12 +140,19 @@ function Login() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-500 to-blue-700">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-500 to-blue-700 relative">
+            {/* Contenedor para el error en la parte superior */}
+            {error && (
+                <div className="absolute top-8 w-full max-w-sm bg-white text-red-600 font-bold text-center py-2 px-4 rounded-md shadow-lg">
+                    <p>{error}</p>
+                </div>
+            )}
+            
             <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-sm">
                 <div className="flex justify-center mb-6">
                     <img src={logo} alt="Logo" className="w-24 h-24" />
                 </div>
-
+    
                 {/* Renderiza GeolocationCheck antes de mostrar el login form */}
                 {!isLocationChecked ? (
                     <GeolocationCheck 
@@ -155,9 +167,12 @@ function Login() {
                     />
                 ) : (
                     <>
-                        {error && <p className="text-red-500 text-xs italic">{error}</p>}
-                        {userPosition && <LocationMap position={userPosition} />} {/* Muestra el mapa si el Check Falla */}
-
+                        {userPosition && (
+                             <div style={{ height: '300px', width: '100%' }}>
+                                <LocationMap position={userPosition} />
+                            </div>        
+                        )} {/* Muestra el mapa si el Check Falla */}
+    
                         <form onSubmit={handleSubmit}>
                             <div className="mb-4 flex items-center">
                                 <User className="text-gray-700 mr-2" />
@@ -191,10 +206,10 @@ function Login() {
                         </form>
                     </>
                 )}
-                
             </div>
         </div>
     );
+    
 }
 
 export default Login;
