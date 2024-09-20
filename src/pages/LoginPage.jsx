@@ -43,45 +43,50 @@ const checkAttendance = async (userId) => {
 // Función para registrar la asistencia (check-in)
 const registerAttendance = async (userId) => {
     const token = localStorage.getItem('token');
-
-    // Obtener la fecha y hora actual en formato ISO
     const checkInTime = new Date().toISOString();
 
-    // Establecer una ubicacion estatica o Dinamica
-    const location = userPosition; // Se hicieron cambios para que guarde la geolocation del check -Andy
+    // Verifica que userPosition tiene las coordenadas correctas
+    if (!userPosition || !userPosition.lat || !userPosition.lng) {
+        console.error('Ubicación no disponible o fuera del área designada.');
+        setError('Ubicación no disponible o fuera del área designada.');
+        return; // No continúa si no hay coordenadas válidas
+    }
 
     try {
-        // Cambiamos las comillas por backticks para la interpolación de variables
         const responseAttendance = await fetch(`http://localhost:4000/api/attendance`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                // También aquí corregimos la interpolación
                 Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({
                 user_id: userId,
                 check_in: checkInTime,
-                location: location,
+                location: {
+                    lat: userPosition.lat,
+                    lng: userPosition.lng,
+                },
             }),
         });
 
         if (!responseAttendance.ok) {
-            throw new Error('Error al registrar la asistencia');
+            const errorDetails = await responseAttendance.text();
+            throw new Error(`Error al registrar la asistencia: ${errorDetails}`);
         }
 
         console.log('Asistencia registrada:', await responseAttendance.json());
     } catch (error) {
-        console.error('Error en el registro de asistencia:', error);
-        setError('No se pudo registrar la asistencia.');
+        console.error('Error en el registro de asistencia:', error.message);
+        setError('No se pudo registrar la asistencia. Detalles: ' + error.message);
     }
 };
 
 
+
     // Funcion que maneja el output positivo de GeolocationCheck -Andy
     const handleLocationSuccess = (position) => {
-        setIsLocationChecked(true); // Designa el check como positivo -Andy
-        setUserPosition(position); // Guarda la posicion del usuario -Andy
+        setIsLocationChecked(true); // Mark geolocation as successful
+        setUserPosition(position);  // Directly use the position object with lat and lng
     };
 
     // Funcion que maneja el geolocation fallido -Andy
@@ -140,24 +145,25 @@ const registerAttendance = async (userId) => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-500 to-blue-700 relative">
-            {/* Contenedor para el error en la parte superior */}
+        <div className="min-h-screen flex items-center justify-center bg-blue-300">
+            {/* Contenedor de errores */}
             {error && (
                 <div className="absolute top-8 w-full max-w-sm bg-white text-red-600 font-bold text-center py-2 px-4 rounded-md shadow-lg">
                     <p>{error}</p>
                 </div>
             )}
-            
-            <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-sm">
+    
+            {/* Contenedor del Login con sombra más pronunciada hacia afuera */}
+            <div className="bg-white p-8 rounded-lg shadow-2xl w-full max-w-md"> 
                 <div className="flex justify-center mb-6">
                     <img src={logo} alt="Logo" className="w-24 h-24" />
                 </div>
     
-                {/* Renderiza GeolocationCheck antes de mostrar el login form */}
+                {/* Comprobación de la geolocalización */}
                 {!isLocationChecked ? (
                     <GeolocationCheck 
                         desiredArea={{
-                            minLat: 9.061274114226507,   // Ajusta estos valores segun el area necesaria -Andy
+                            minLat: 9.061274114226507,   
                             maxLat: 9.068140872874764,
                             minLon: -79.39165233216502,
                             maxLon: -79.38659580540434,
@@ -168,37 +174,45 @@ const registerAttendance = async (userId) => {
                 ) : (
                     <>
                         {userPosition && (
-                             <div style={{ height: '300px', width: '100%' }}>
+                             <div className="my-4 h-64 w-full rounded-md overflow-hidden">
                                 <LocationMap position={userPosition} />
                             </div>        
-                        )} {/* Muestra el mapa si el Check Falla */}
+                        )}
     
+                        {/* Formulario de inicio de sesión */}
                         <form onSubmit={handleSubmit}>
-                            <div className="mb-4 flex items-center">
-                                <User className="text-gray-700 mr-2" />
-                                <input
-                                    type="text"
-                                    placeholder="Username"
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
-                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                                    required
-                                />
+                            <div className="mb-4">
+                                <div className="flex items-center border rounded-md px-3 py-2 mb-3 bg-gray-100 shadow-lg">
+                                    <User className="text-gray-600 mr-2" />
+                                    <input
+                                        type="text"
+                                        placeholder="Username"
+                                        value={username}
+                                        onChange={(e) => setUsername(e.target.value)}
+                                        className="bg-transparent w-full focus:outline-none text-gray-700"
+                                        required
+                                    />
+                                </div>
                             </div>
-                            <div className="mb-6 flex items-center">
-                                <Lock className="text-gray-700 mr-2" />
-                                <input
-                                    type="password"
-                                    placeholder="Password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                                    required
-                                />
+    
+                            <div className="mb-6">
+                                <div className="flex items-center border rounded-md px-3 py-2 bg-gray-100 shadow-lg">
+                                    <Lock className="text-gray-600 mr-2" />
+                                    <input
+                                        type="password"
+                                        placeholder="Password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="bg-transparent w-full focus:outline-none text-gray-700"
+                                        required
+                                    />
+                                </div>
                             </div>
+    
+                            {/* Sombra hacia adentro con hover que cambia la sombra a azul */}
                             <button
                                 type="submit"
-                                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full"
+                                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline w-full transition-all shadow-inner hover:shadow-blue-500/50"
                                 disabled={loading}
                             >
                                 {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}

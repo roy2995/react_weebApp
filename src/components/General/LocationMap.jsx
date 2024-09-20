@@ -11,14 +11,14 @@ const LocationMap = ({ position }) => {
     <div style={{ height: '400px', width: '100%', overflow: 'hidden', margin: '0 auto' }}>
       <Map
         initialViewState={{
-          longitude: position.lon,
+          longitude: position.lng,
           latitude: position.lat,
           zoom: 17,
         }}
         style={{ width: '100%', height: '100%' }}
         mapStyle="mapbox://styles/mapbox/dark-v10"
       >
-        <Marker longitude={position.lon} latitude={position.lat} color="red" />
+        <Marker longitude={position.lng} latitude={position.lat} color="red" />
       </Map>
     </div>
   );

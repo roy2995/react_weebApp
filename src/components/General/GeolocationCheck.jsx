@@ -11,7 +11,16 @@ const GeolocationCheck = ({ desiredArea, onSuccess, onFailure }) => {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     const { latitude, longitude } = position.coords;
-                    setUserPosition({ lat: latitude, lon: longitude });
+
+                    // Check if latitude and longitude are valid numbers
+                    if (isNaN(latitude) || isNaN(longitude)) {
+                        setError('Invalid location data received.');
+                        onFailure();
+                        return;
+                    }
+
+                    // Store the user's position
+                    setUserPosition({ lat: latitude, lng: longitude });
 
                     // Check if the user is within the desired area
                     if (
@@ -20,7 +29,7 @@ const GeolocationCheck = ({ desiredArea, onSuccess, onFailure }) => {
                         longitude >= desiredArea.minLon &&
                         longitude <= desiredArea.maxLon
                     ) {
-                        onSuccess();
+                        onSuccess({ lat: latitude, lng: longitude });  // Pass valid position
                     } else {
                         onFailure();
                     }
