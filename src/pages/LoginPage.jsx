@@ -135,6 +135,12 @@ const registerAttendance = async (userId) => {
                 } else {
                     setError('No tienes los permisos necesarios para acceder.');
                 }
+
+                if(data.user.role === 'admin') {
+                    navigate('/assignments');
+                } else {
+                    setError('No tienes los permisos necesarios para acceder.');
+                }
             } else {
                 setError(data.message || 'Credenciales incorrectas');
             }
