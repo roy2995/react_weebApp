@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-
+//Hasta la fecha no entiendo muy bien por que este modulo sigue aqui, pero tendrian que preguntarle a roderick si se esta usando para algo,
+//Por mi lado pues la ultima vez que revise no se esta utilizando en ningun modulo, pero deberias de revisar si en el de login se implementa
 const AttendancePage = () => {
     const [error, setError] = useState('');
     const [attendanceData, setAttendanceData] = useState(null);

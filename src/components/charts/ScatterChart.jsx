@@ -4,7 +4,23 @@ import { Chart as ChartJS, LinearScale, PointElement, Tooltip, Legend } from 'ch
 ChartJS.register(LinearScale, PointElement, Tooltip, Legend);
 
 function ScatterChart({ data }) {
-  return <Scatter data={data} />;
+  return (
+    <Scatter
+      data={data}
+      options={{
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          title: {
+            display: true,
+            text: 'Analisis de Tiempo de Limpieza',
+          },
+        },
+      }}
+    />
+  );
 }
 
 export default ScatterChart;

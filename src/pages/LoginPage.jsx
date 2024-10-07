@@ -1,152 +1,150 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Lock } from 'lucide-react';
-import logo from '../assets/logo.jpg';
-import GeolocationCheck from '../Components/General/GeolocationCheck'; //Se importo el componente de GeolocationCheck -Andy
-import LocationMap from '../Components/General/LocationMap'; // Se importo el componente de LocationMap -Andy
+import { User, Lock } from 'lucide-react'; // Iconos para los campos de entrada (usuario y contraseña)
+import logo from '../assets/logo.jpg'; // Importa el logo de la aplicación
+import GeolocationCheck from '../Components/General/GeolocationCheck'; // Componente para verificar la ubicación del usuario
+import LocationMap from '../Components/General/LocationMap'; // Componente para mostrar un mapa con la ubicación del usuario
 
 function Login() {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [isLocationChecked, setIsLocationChecked] = useState(false);
-    const [userPosition, setUserPosition] = useState(null); // To store user's position
-    const navigate = useNavigate();
+    // Estados locales para manejar el formulario de inicio de sesión y la geolocalización
+    const [username, setUsername] = useState(''); // Almacena el nombre de usuario
+    const [password, setPassword] = useState(''); // Almacena la contraseña
+    const [loading, setLoading] = useState(false); // Maneja el estado de carga del botón (cuando se envía el formulario)
+    const [error, setError] = useState(''); // Maneja los mensajes de error
+    const [isLocationChecked, setIsLocationChecked] = useState(false); // Indica si la geolocalización ha sido verificada
+    const [userPosition, setUserPosition] = useState(null); // Almacena la posición geográfica del usuario (latitud y longitud)
+    const navigate = useNavigate(); // Hook de React Router para redirigir al usuario después del inicio de sesión
 
     // Función para verificar si el usuario ya registró asistencia hoy
-const checkAttendance = async (userId) => {
-    const token = localStorage.getItem('token');
-
-    try {
-        // Cambiamos las comillas por backticks para la interpolación de variables
-        const response = await fetch(`http://localhost:4000/api/attendance/today/${userId}`, {
-            headers: {
-                // También aquí corregimos la interpolación
-                Authorization: `Bearer ${token}`,
-            },
-        });
-
-        if (!response.ok) {
-            throw new Error('Error al verificar la asistencia');
-        }
-
-        const attendanceData = await response.json();
-        return attendanceData; // Retorna los datos de asistencia
-    } catch (error) {
-        console.error('Error en la verificación de asistencia:', error);
-        setError('No se pudo verificar la asistencia.');
-        return null; // Retorna null en caso de error
-    }
-};
-
-// Función para registrar la asistencia (check-in)
-const registerAttendance = async (userId) => {
-    const token = localStorage.getItem('token');
-    const checkInTime = new Date().toISOString();
-
-    // Verifica que userPosition tiene las coordenadas correctas
-    if (!userPosition || !userPosition.lat || !userPosition.lng) {
-        console.error('Ubicación no disponible o fuera del área designada.');
-        setError('Ubicación no disponible o fuera del área designada.');
-        return; // No continúa si no hay coordenadas válidas
-    }
-
-    try {
-        const responseAttendance = await fetch(`http://localhost:4000/api/attendance`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-                user_id: userId,
-                check_in: checkInTime,
-                location: {
-                    lat: userPosition.lat,
-                    lng: userPosition.lng,
-                },
-            }),
-        });
-
-        if (!responseAttendance.ok) {
-            const errorDetails = await responseAttendance.text();
-            throw new Error(`Error al registrar la asistencia: ${errorDetails}`);
-        }
-
-        console.log('Asistencia registrada:', await responseAttendance.json());
-    } catch (error) {
-        console.error('Error en el registro de asistencia:', error.message);
-        setError('No se pudo registrar la asistencia. Detalles: ' + error.message);
-    }
-};
-
-
-
-    // Funcion que maneja el output positivo de GeolocationCheck -Andy
-    const handleLocationSuccess = (position) => {
-        setIsLocationChecked(true); // Mark geolocation as successful
-        setUserPosition(position);  // Directly use the position object with lat and lng
-    };
-
-    // Funcion que maneja el geolocation fallido -Andy
-    const handleLocationFailure = () => {
-        setError('No estás dentro del área designada para iniciar turno.');
-        setIsLocationChecked(false); // Reinicia el location Check State
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
+    const checkAttendance = async (userId) => {
+        const token = localStorage.getItem('token'); // Obtiene el token de autenticación almacenado en localStorage
 
         try {
+            // Realiza una petición GET para verificar si el usuario ya registró su asistencia hoy
+            const response = await fetch(`http://localhost:4000/api/attendance/today/${userId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`, // Incluye el token en el encabezado de la solicitud
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Error al verificar la asistencia'); // Si la respuesta no es OK, lanza un error
+            }
+
+            const attendanceData = await response.json(); // Convierte la respuesta en JSON
+            return attendanceData; // Retorna los datos de asistencia
+        } catch (error) {
+            console.error('Error en la verificación de asistencia:', error);
+            setError('No se pudo verificar la asistencia.'); // Establece el mensaje de error en el estado
+            return null; // Retorna null si hay un error
+        }
+    };
+
+    // Función para registrar la asistencia (check-in)
+    const registerAttendance = async (userId) => {
+        const token = localStorage.getItem('token'); // Obtiene el token de autenticación
+        const checkInTime = new Date().toISOString(); // Genera la fecha y hora actual en formato ISO
+
+        // Verifica que `userPosition` contenga las coordenadas correctas
+        if (!userPosition || !userPosition.lat || !userPosition.lng) {
+            console.error('Ubicación no disponible o fuera del área designada.');
+            setError('Ubicación no disponible o fuera del área designada.');
+            return; // Si no hay coordenadas válidas, no continúa
+        }
+
+        try {
+            // Realiza una petición POST para registrar la asistencia del usuario
+            const responseAttendance = await fetch(`http://localhost:4000/api/attendance`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`, // Incluye el token de autenticación
+                },
+                body: JSON.stringify({
+                    user_id: userId, // ID del usuario
+                    check_in: checkInTime, // Hora de check-in
+                    location: {
+                        lat: userPosition.lat, // Latitud del usuario
+                        lng: userPosition.lng, // Longitud del usuario
+                    },
+                }),
+            });
+
+            if (!responseAttendance.ok) {
+                const errorDetails = await responseAttendance.text(); // Obtiene los detalles del error
+                throw new Error(`Error al registrar la asistencia: ${errorDetails}`); // Lanza el error
+            }
+
+            console.log('Asistencia registrada:', await responseAttendance.json()); // Muestra los detalles de la asistencia registrada
+        } catch (error) {
+            console.error('Error en el registro de asistencia:', error.message);
+            setError('No se pudo registrar la asistencia. Detalles: ' + error.message); // Establece el mensaje de error
+        }
+    };
+
+    // Función que maneja el output positivo de GeolocationCheck
+    const handleLocationSuccess = (position) => {
+        setIsLocationChecked(true); // Marca la geolocalización como exitosa
+        setUserPosition(position);  // Establece la posición del usuario en el estado
+    };
+
+    // Función que maneja el fallo en la geolocalización
+    const handleLocationFailure = () => {
+        setError('No estás dentro del área designada para iniciar turno.'); // Establece un mensaje de error
+        setIsLocationChecked(false); // Reinicia el estado de verificación de ubicación
+    };
+
+    // Maneja el envío del formulario de inicio de sesión
+    const handleSubmit = async (e) => {
+        e.preventDefault(); // Previene el comportamiento por defecto del formulario
+        setLoading(true); // Activa el estado de carga
+        setError(''); // Resetea los errores previos
+
+        try {
+            // Realiza una petición POST para autenticar al usuario
             const response = await fetch('http://localhost:4000/api/Users/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ username, password }),
+                body: JSON.stringify({ username, password }), // Envía el nombre de usuario y contraseña
             });
 
-            const data = await response.json();
-            setLoading(false);
+            const data = await response.json(); // Convierte la respuesta en JSON
+            setLoading(false); // Desactiva el estado de carga
 
             if (response.ok && data.accessToken) {
-                // Guarda los tokens el LocalStorage
+                // Si la autenticación es exitosa, guarda los tokens y datos del usuario en localStorage
                 localStorage.setItem('token', data.accessToken);
                 localStorage.setItem('refreshToken', data.refreshToken);
                 localStorage.setItem('role', data.user.role);
+                localStorage.setItem('userId', data.user.id);
 
-                // Verificar si ya se registro asistencia hoy
+                // Verifica si el usuario ya registró su asistencia hoy
                 const attendanceData = await checkAttendance(data.user.id);
 
                 if (attendanceData && !attendanceData.attendanceExists) {
-                    // Si no hay registro, registrar asistencia
+                    // Si no hay registro de asistencia, lo registra
                     await registerAttendance(data.user.id);
                     console.log('Asistencia registrada después del inicio de sesión.');
                 } else if (attendanceData && attendanceData.attendanceExists) {
                     console.log('El usuario ya tiene registro de asistencia hoy:', attendanceData);
                 }
 
-                // Redirigir según el rol del usuario
+                // Redirige al usuario a la página correspondiente según su rol
                 if (data.user.role === 'user') {
-                    navigate('/attendance');
-                } else {
-                    setError('No tienes los permisos necesarios para acceder.');
-                }
-
-                if(data.user.role === 'admin') {
+                    navigate('/CleaningService');
+                } else if (data.user.role === 'admin') {
                     navigate('/assignments');
                 } else {
                     setError('No tienes los permisos necesarios para acceder.');
                 }
             } else {
-                setError(data.message || 'Credenciales incorrectas');
+                setError(data.message || 'Credenciales incorrectas'); // Muestra un mensaje de error si las credenciales son incorrectas
             }
         } catch (error) {
-            setLoading(false);
-            setError('Error de conexión. Inténtalo de nuevo.');
+            setLoading(false); // Desactiva el estado de carga
+            setError('Error de conexión. Inténtalo de nuevo.'); // Establece un mensaje de error por problemas de conexión
         }
     };
 
@@ -229,7 +227,6 @@ const registerAttendance = async (userId) => {
             </div>
         </div>
     );
-    
 }
 
 export default Login;

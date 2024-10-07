@@ -12,12 +12,16 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "@cloudinary/react": "^1.13.0",
+    "@cloudinary/url-gen": "^1.21.0",
     "@mui/x-charts": "^7.17.0",
     "chart.js": "^4.4.4",
+    "daisyui": "^4.12.11",
     "lucide-react": "^0.441.0",
     "mapbox-gl": "^3.6.0",
     "maplibre-gl": "^4.7.0",
     "react": "^18.3.1",
+    "react-beautiful-dnd": "^13.1.1",
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.3.1",
     "react-map-gl": "^7.1.7",

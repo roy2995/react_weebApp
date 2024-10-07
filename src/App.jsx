@@ -1,14 +1,14 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Login from './pages/LoginPage';   
-
+import Login from './pages/LoginPage';
 import AttendancePage from './pages/AttendancePage';
 import PrivateRoute from './components/PrivateRoute';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import LocationMap from './components/General/LocationMap';
 import GeolocationCheck from './components/General/GeolocationCheck';
 import CleaningService from './pages/CleaningService';
-import Assignments from './pages/Asignaciones'; // Import the Assignments component
+import Assignments from './pages/Asignaciones';
+import Dashboard from './pages/DashboardPage'; // Asegúrate de que esta ruta sea correcta
 
 function App() {
   return (
@@ -16,7 +16,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         
-        {/* Ruta Protegida para el Servicio de Limpieza*/}
+        {/* Ruta Protegida para el Servicio de Limpieza */}
         <Route
           path="/CleaningService"
           element={
@@ -27,11 +27,24 @@ function App() {
         />
 
         {/* Ruta para el componente de Asignaciones */}
-        <Route path="/assignments" element={
-           <PrivateRoute allowedRoles={['admin']}>
+        <Route 
+          path="/assignments" 
+          element={
+            <PrivateRoute allowedRoles={['admin']}>
               <Assignments />
-           </PrivateRoute>
-      } />
+            </PrivateRoute>
+          } 
+        />
+
+        {/* Ruta para el Dashboard */}
+        <Route 
+          path="/Dashboard" 
+          element={
+            <PrivateRoute allowedRoles={['admin', 'user']}> {/* Ajusta los roles permitidos según sea necesario */}
+              <Dashboard />
+            </PrivateRoute>
+          } 
+        />
       </Routes>
     </Router>
   );
