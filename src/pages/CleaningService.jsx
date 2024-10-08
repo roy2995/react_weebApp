@@ -2,15 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Cloudinary } from '@cloudinary/url-gen';
 
 const CleaningReport = () => {
-  const [area, setArea] = useState({});
-  const [tasks, setTasks] = useState([]);
-  const [contingencies, setContingencies] = useState([]);
-  const [selectedTasks, setSelectedTasks] = useState([]);
-  const [selectedContingencies, setSelectedContingencies] = useState([]);
+  const [area, setArea] = useState(JSON.parse(localStorage.getItem('area')) || {});
+  const [tasks, setTasks] = useState(JSON.parse(localStorage.getItem('tasks')) || []);
+  const [contingencies, setContingencies] = useState(JSON.parse(localStorage.getItem('contingencies')) || []);
+  const [selectedTasks, setSelectedTasks] = useState(JSON.parse(localStorage.getItem('selectedTasks')) || []);
+  const [selectedContingencies, setSelectedContingencies] = useState(JSON.parse(localStorage.getItem('selectedContingencies')) || []);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [beforePhotoSaved, setBeforePhotoSaved] = useState(false);
-  const [afterPhotoSaved, setAfterPhotoSaved] = useState(false);
+  const [beforePhotoSaved, setBeforePhotoSaved] = useState(!!localStorage.getItem('beforePhotoUrl'));
+  const [afterPhotoSaved, setAfterPhotoSaved] = useState(!!localStorage.getItem('afterPhotoUrl'));
 
   const cloudinaryInstance = new Cloudinary({
     cloud: {
@@ -55,7 +55,7 @@ const CleaningReport = () => {
         setLoading(true); 
         const token = localStorage.getItem('token');
         const userId = localStorage.getItem('userId');
-
+        
         if (!token || !userId) {
           throw new Error("Token or User ID not found");
         }
@@ -68,49 +68,101 @@ const CleaningReport = () => {
           throw new Error(`Error fetching user bucket: ${userBucketResponse.statusText}`);
         }
         const userBucketData = await userBucketResponse.json();
-        console.log('User Bucket Data:', userBucketData);
-
-        if (!userBucketData.body || userBucketData.body.length === 0 || !userBucketData.body[0].bucket_id) {
-          throw new Error("No se encontró ningún bucket asignado para este usuario.");
-        }
         const bucketId = userBucketData.body[0].bucket_id;
-        console.log('Bucket ID:', bucketId);
+
+        // Verifica si el bucketId es diferente al almacenado
+        const storedBucketId = localStorage.getItem('bucketId');
+        if (storedBucketId !== bucketId.toString()) {
+          console.log('Assigned bucket has changed. Clearing localStorage.');
+          localStorage.clear();
+          localStorage.setItem('userId', userId);
+          localStorage.setItem('bucketId', bucketId);
+        } else {
+          console.log('Bucket ID is the same, loading cached data.');
+        }
 
         console.log('Fetching bucket details...');
         const bucketResponse = await fetch(`http://localhost:4000/api/buckets/${bucketId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!bucketResponse.ok) {
-          throw new Error(`Error fetching bucket details: ${bucketResponse.statusText}`);
-        }
         const bucketData = await bucketResponse.json();
         const bucket = bucketData.body[0];
         setArea(bucket);
-        console.log('Bucket Details:', bucket);
+        localStorage.setItem('area', JSON.stringify(bucket));
 
         console.log('Fetching tasks...');
         const tasksResponse = await fetch(`http://localhost:4000/api/tasks`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!tasksResponse.ok) {
-          throw new Error(`Error fetching tasks: ${tasksResponse.statusText}`);
-        }
         const allTasksData = await tasksResponse.json();
         const filteredTasks = allTasksData.body.filter((task) => task.Type.toString() === bucket.Tipo.toString());
         setTasks(filteredTasks);
-        console.log('Filtered Tasks:', filteredTasks);
+        localStorage.setItem('tasks', JSON.stringify(filteredTasks));
+
+        // Carga y mantiene el progreso de bucket solo si no existe en el cache actual
+        const progressBucketId = localStorage.getItem('progressBucketId');
+        if (!progressBucketId) {
+          console.log('No cached bucket progress found. Creating new progress bucket...');
+          const createBucketResponse = await fetch(`http://localhost:4000/api/progress_buckets`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              bucket_id: bucketId,
+              status: 0,
+              user_id: userId,
+              date: new Date().toISOString().slice(0, 10),
+            }),
+          });
+
+          if (!createBucketResponse.ok) {
+            throw new Error(`Error creating progress bucket: ${createBucketResponse.statusText}`);
+          }
+
+          const createBucketData = await createBucketResponse.json();
+          localStorage.setItem('progressBucketId', createBucketData.body.id);
+          console.log('Progress bucket created with ID:', createBucketData.body.id);
+        } else {
+          console.log('Cached progress bucket found with ID:', progressBucketId);
+        }
+
+        // Carga y mantiene el progreso de tareas solo si no existe en el cache actual
+        const cachedSelectedTasks = JSON.parse(localStorage.getItem('selectedTasks')) || [];
+        if (cachedSelectedTasks.length === 0) {
+          console.log('No cached task progress found. Creating new progress for tasks...');
+          const taskProgressIds = await Promise.all(filteredTasks.map(async (task) => {
+            const response = await fetch(`http://localhost:4000/api/progress_tasks`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                task_id: task.ID,
+                status: 0,
+                user_id: userId,
+                date: new Date().toISOString().slice(0, 10),
+              }),
+            });
+            const data = await response.json();
+            return { taskId: task.ID, progressId: data.body.id, status: 0 };
+          }));
+          setSelectedTasks(taskProgressIds);
+          localStorage.setItem('selectedTasks', JSON.stringify(taskProgressIds));
+        } else {
+          setSelectedTasks(cachedSelectedTasks);
+        }
 
         console.log('Fetching contingencies...');
         const contingenciesResponse = await fetch(`http://localhost:4000/api/contingencies`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!contingenciesResponse.ok) {
-          throw new Error(`Error fetching contingencies: ${contingenciesResponse.statusText}`);
-        }
         const allContingenciesData = await contingenciesResponse.json();
         const filteredContingencies = allContingenciesData.body.filter((contingency) => contingency.Type.toString() === bucket.Tipo.toString());
         setContingencies(filteredContingencies);
-        console.log('Filtered Contingencies:', filteredContingencies);
+        localStorage.setItem('contingencies', JSON.stringify(filteredContingencies));
 
         setLoading(false);
       } catch (err) {
@@ -125,20 +177,21 @@ const CleaningReport = () => {
 
   const handleTaskChange = (taskId) => {
     console.log('Task selected:', taskId);
-    setSelectedTasks((prevTasks) =>
-      prevTasks.includes(taskId)
-        ? prevTasks.filter((id) => id !== taskId)
-        : [...prevTasks, taskId]
+    const updatedTasks = selectedTasks.map((task) =>
+      task.taskId === taskId ? { ...task, status: task.status === 0 ? 1 : 0 } : task
     );
+    setSelectedTasks(updatedTasks);
+    localStorage.setItem('selectedTasks', JSON.stringify(updatedTasks));
+    console.log('Updated task progress in cache:', updatedTasks);
   };
 
   const handleContingencyChange = (contingencyId) => {
-    console.log('Contingency selected:', contingencyId);
-    setSelectedContingencies((prevContingencies) =>
-      prevContingencies.includes(contingencyId)
-        ? prevContingencies.filter((id) => id !== contingencyId)
-        : [...prevContingencies, contingencyId]
-    );
+    const updatedContingencies = selectedContingencies.includes(contingencyId)
+      ? selectedContingencies.filter((id) => id !== contingencyId)
+      : [...selectedContingencies, contingencyId];
+
+    setSelectedContingencies(updatedContingencies);
+    localStorage.setItem('selectedContingencies', JSON.stringify(updatedContingencies));
   };
 
   const handleSubmit = async () => {
@@ -146,38 +199,60 @@ const CleaningReport = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
+
       if (!token) {
-        throw new Error("No token found");
+        throw new Error("No authorization token found");
       }
 
-      const newProgressBucketData = {
-        bucket_id: area.ID,
-        status: 'completed',
-        user_id: localStorage.getItem('userId'),
-        date: new Date(),
-      };
+      // Actualiza el progreso de todas las tareas en el backend
+      await Promise.all(selectedTasks.map(async (task) => {
+        const response = await fetch(`http://localhost:4000/api/progress_tasks/${task.progressId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            task_id: task.taskId,
+            status: task.status,
+            user_id: localStorage.getItem('userId'),
+            date: new Date().toISOString().slice(0, 10),
+          }),
+        });
+        if (!response.ok) {
+          console.error(`Failed to update task ${task.taskId}, status code: ${response.status}`);
+          throw new Error(`Error updating task ${task.taskId}`);
+        }
+        console.log(`Updated task ${task.taskId} status to ${task.status}`);
+      }));
 
-      const createProgressBucketResponse = await fetch('http://localhost:4000/api/progress_buckets', {
-        method: 'POST',
+      const progressBucketId = localStorage.getItem('progressBucketId');
+      if (!progressBucketId) throw new Error('No progress bucket ID found in cache');
+
+      const response = await fetch(`http://localhost:4000/api/progress_buckets/${progressBucketId}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(newProgressBucketData),
+        body: JSON.stringify({
+          bucket_id: area.ID,
+          status: 1,
+          user_id: localStorage.getItem('userId'),
+          date: new Date().toISOString().slice(0, 10),
+        }),
       });
 
-      if (!createProgressBucketResponse.ok) {
-        const errorData = await createProgressBucketResponse.json();
-        throw new Error(`Error creating progress bucket: ${errorData.message}`);
+      if (!response.ok) {
+        console.error(`Failed to update bucket, status code: ${response.status}`);
+        throw new Error('Error actualizando el bucket');
       }
 
-      const createdProgressBucket = await createProgressBucketResponse.json();
-      console.log('Progress bucket created:', createdProgressBucket);
-
+      console.log('Bucket progress updated successfully.');
+      localStorage.clear(); 
       setLoading(false);
     } catch (error) {
-      console.error('Error submitting report:', error);
-      setError(error);
+      console.error('Error al enviar el reporte:', error);
       setLoading(false);
     }
   };
@@ -211,7 +286,7 @@ const CleaningReport = () => {
               <li key={task.ID} className="flex items-center bg-gray-100 p-3 rounded-lg border border-gray-200">
                 <input
                   type="checkbox"
-                  checked={selectedTasks.includes(task.ID)}
+                  checked={selectedTasks.some((t) => t.taskId === task.ID && t.status === 1)}
                   onChange={() => handleTaskChange(task.ID)}
                   className="mr-2 w-5 h-5 rounded focus:ring-2 focus:ring-blue-500"
                 />
