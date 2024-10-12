@@ -149,84 +149,90 @@ function Login() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-blue-300">
-            {/* Contenedor de errores */}
-            {error && (
-                <div className="absolute top-8 w-full max-w-sm bg-white text-red-600 font-bold text-center py-2 px-4 rounded-md shadow-lg">
-                    <p>{error}</p>
-                </div>
-            )}
-    
-            {/* Contenedor del Login con sombra más pronunciada hacia afuera */}
-            <div className="bg-white p-8 rounded-lg shadow-2xl w-full max-w-md"> 
-                <div className="flex justify-center mb-6">
-                    <img src={logo} alt="Logo" className="w-24 h-24" />
-                </div>
-    
-                {/* Comprobación de la geolocalización */}
-                {!isLocationChecked ? (
-                    <GeolocationCheck 
-                        desiredArea={{
-                            minLat: 9.061274114226507,   
-                            maxLat: 9.068140872874764,
-                            minLon: -79.39165233216502,
-                            maxLon: -79.38659580540434,
-                        }} 
-                        onSuccess={handleLocationSuccess} 
-                        onFailure={handleLocationFailure} 
-                    />
-                ) : (
-                    <>
-                        {userPosition && (
-                             <div className="my-4 h-64 w-full rounded-md overflow-hidden">
-                                <LocationMap position={userPosition} />
-                            </div>        
-                        )}
-    
-                        {/* Formulario de inicio de sesión */}
-                        <form onSubmit={handleSubmit}>
-                            <div className="mb-4">
-                                <div className="flex items-center border rounded-md px-3 py-2 mb-3 bg-gray-100 shadow-lg">
-                                    <User className="text-gray-600 mr-2" />
-                                    <input
-                                        type="text"
-                                        placeholder="Username"
-                                        value={username}
-                                        onChange={(e) => setUsername(e.target.value)}
-                                        className="bg-transparent w-full focus:outline-none text-gray-700"
-                                        required
-                                    />
-                                </div>
-                            </div>
-    
-                            <div className="mb-6">
-                                <div className="flex items-center border rounded-md px-3 py-2 bg-gray-100 shadow-lg">
-                                    <Lock className="text-gray-600 mr-2" />
-                                    <input
-                                        type="password"
-                                        placeholder="Password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        className="bg-transparent w-full focus:outline-none text-gray-700"
-                                        required
-                                    />
-                                </div>
-                            </div>
-    
-                            {/* Sombra hacia adentro con hover que cambia la sombra a azul */}
-                            <button
-                                type="submit"
-                                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline w-full transition-all shadow-inner hover:shadow-blue-500/50"
-                                disabled={loading}
-                            >
-                                {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
-                            </button>
-                        </form>
-                    </>
-                )}
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-blue-500 to-blue-400 p-12">
+          {/* Contenedor de errores */}
+          {error && (
+            <div className="absolute top-8 w-full max-w-sm bg-white bg-opacity-40 backdrop-blur-lg text-red-600 font-bold text-center py-3 px-6 rounded-lg shadow-lg border border-red-600/30">
+              <p>{error}</p>
             </div>
+          )}
+      
+          {/* Contenedor del Login */}
+          <div className="max-w-lg w-full bg-white bg-opacity-40 backdrop-blur-lg p-14 rounded-2xl shadow-2xl transition-transform duration-300 border border-white/30">
+            
+            {/* Logo con bordes redondeados */}
+            <div className="avatar flex justify-center mb-8">
+              <div className="w-32 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden">
+                <img src={logo} alt="Logo" className="w-full h-full object-cover" />
+              </div>
+            </div>
+      
+            {/* Comprobación de la geolocalización */}
+            {!isLocationChecked ? (
+              <GeolocationCheck 
+                desiredArea={{
+                  minLat: 9.061274114226507,   
+                  maxLat: 9.068140872874764,
+                  minLon: -79.39165233216502,
+                  maxLon: -79.38659580540434,
+                }} 
+                onSuccess={handleLocationSuccess} 
+                onFailure={handleLocationFailure} 
+              />
+            ) : (
+              <>
+                {userPosition && (
+                  <div className="my-6 h-72 w-full rounded-xl overflow-hidden shadow-lg">
+                    <LocationMap position={userPosition} />
+                  </div>        
+                )}
+      
+                {/* Formulario de inicio de sesión */}
+                <form onSubmit={handleSubmit}>
+                  <div className="mb-6">
+                    <div className="flex items-center border border-gray-300 rounded-lg px-5 py-4 mb-4 bg-gray-200 bg-opacity-40 backdrop-blur-sm text-gray-900 shadow-inner">
+                      <User className="text-gray-700 mr-3" />
+                      <input
+                        type="text"
+                        placeholder="Username"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        className="bg-transparent w-full focus:outline-none text-gray-900 text-lg"
+                        required
+                      />
+                    </div>
+                  </div>
+      
+                  <div className="mb-8">
+                    <div className="flex items-center border border-gray-300 rounded-lg px-5 py-4 bg-gray-200 bg-opacity-40 backdrop-blur-sm text-gray-900 shadow-inner">
+                      <Lock className="text-gray-700 mr-3" />
+                      <input
+                        type="password"
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="bg-transparent w-full focus:outline-none text-gray-900 text-lg"
+                        required
+                      />
+                    </div>
+                  </div>
+      
+                  {/* Botón de inicio de sesión */}
+                  <button
+                    type="submit"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg shadow-xl hover:shadow-blue-500/50 transition-all duration-300 ease-in-out text-lg"
+                    disabled={loading}
+                  >
+                    {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
         </div>
-    );
+      );
+      
+      
 }
 
 export default Login;

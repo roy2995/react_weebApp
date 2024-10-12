@@ -1,0 +1,9 @@
+{
+    "Reports":{
+        "Contingency_progress": [40,],
+        "Task_progress": [1,4,32,12],
+        "Bucket_progress": [1]
+        "Foto Antes": ['URL aqui']
+        "Foto Despues": ['URL aqui']
+    }
+}

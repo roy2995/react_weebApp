@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import Header from "../components/General/Header";
+import logo from '../Assets/logo.jpg';
 
 const Assignments = () => {
   const [users, setUsers] = useState([]);
@@ -100,82 +102,91 @@ const Assignments = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <h2 className="text-xl font-bold mb-4">Asignación de Tareas</h2>
-      <div className="flex space-x-4">
-        {/* Dropdown para seleccionar usuario */}
-        <div>
-          <h3 className="font-semibold">Usuario</h3>
-          <select
-            className="p-2 border"
-            value={selectedUser}
-            onChange={(e) => {
-              console.log("User selected:", e.target.value); // Asegúrate de que el usuario está siendo seleccionado correctamente
-              setSelectedUser(e.target.value);
-            }}
-          >
-            <option value="">Seleccionar Usuario</option>
-            {users.map((user) => (
-              <option key={user.id} value={user.id}>
-                {user.username}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Dropdown para seleccionar bucket */}
-        <div>
-          <h3 className="font-semibold">Tarea</h3>
-          <select
-            className="p-2 border"
-            value={selectedBucket}
-            onChange={(e) => {
-              console.log("Bucket ID selected:", e.target.value); // Selecciona el ID del bucket, no el texto
-              setSelectedBucket(e.target.value); // Aquí seleccionamos el ID del bucket
-            }}
-          >
-            <option value="">Seleccionar Tarea</option>
-            {buckets.map((bucket) => (
-              <option key={bucket.ID} value={bucket.ID}> {/* Aquí usamos bucket.ID */}
-                {`(Area: ${bucket.Area}, Terminal: ${bucket.Terminal})`} {/* Muestra Area y Terminal */}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Botón para asignar */}
-        <div>
-          <button
-            onClick={handleAssign}
-            className="mt-6 bg-blue-500 text-white p-2 rounded"
-          >
-            Asignar
-          </button>
+    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-500 to-blue-400 p-10">
+      <Header /> {/* Header Importado */}
+      
+      <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
+        <div className="max-w-xl w-full bg-white bg-opacity-40 backdrop-blur-lg p-12 rounded-2xl shadow-xl transition-transform duration-300 border border-white/30">
+          <h2 className="text-2xl font-bold mb-6 text-center text-gray-900">Asignación de Tareas</h2>
+          
+          {/* Dropdown para seleccionar usuario */}
+          <div className="mb-8">
+            <h3 className="font-semibold text-gray-900 text-center">Usuario</h3>
+            <select
+              className="select select-bordered w-full mt-4 bg-gray-200 bg-opacity-40 backdrop-blur-sm rounded-lg border border-gray-300 text-gray-900 text-lg py-3 px-4 leading-tight text-center"
+              value={selectedUser}
+              onChange={(e) => {
+                console.log("User selected:", e.target.value);
+                setSelectedUser(e.target.value);
+              }}
+            >
+              <option value="">Seleccionar Usuario</option>
+              {users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.username}
+                </option>
+              ))}
+            </select>
+          </div>
+    
+          {/* Dropdown para seleccionar bucket */}
+          <div className="mb-8">
+            <h3 className="font-semibold text-gray-900 text-center">Tarea</h3>
+            <select
+              className="select select-bordered w-full mt-4 bg-gray-200 bg-opacity-40 backdrop-blur-sm rounded-lg border border-gray-300 text-gray-900 text-lg py-3 px-4 leading-tight text-center"
+              style={{ minWidth: "300px" }}
+              value={selectedBucket}
+              onChange={(e) => {
+                console.log("Bucket ID selected:", e.target.value);
+                setSelectedBucket(e.target.value);
+              }}
+            >
+              <option value="">Seleccionar Tarea</option>
+              {buckets.map((bucket) => (
+                <option key={bucket.ID} value={bucket.ID}>
+                  {`(Area: ${bucket.Area}, Terminal: ${bucket.Terminal})`}
+                </option>
+              ))}
+            </select>
+          </div>
+    
+          {/* Botón para asignar */}
+          <div className="flex justify-center mb-8">
+            <button
+              onClick={handleAssign}
+              className="w-full bg-primary text-white font-bold py-4 px-6 text-lg rounded-lg shadow-xl hover:bg-accent hover:scale-105 active:scale-95 transition-all duration-300 ease-in-out"
+            >
+              Asignar
+            </button>
+          </div>
+    
+          {/* Lista de asignaciones actuales */}
+          <h3 className="font-semibold text-center text-gray-900 mb-4">Asignaciones</h3>
+          <ul className="list-disc list-inside text-center mb-8 text-gray-900">
+            {userBuckets.map((assignment, index) => {
+              const user = users.find((u) => u.id === assignment.user_id);
+              const bucket = buckets.find((b) => b.ID === assignment.bucket_id);
+              return (
+                <li key={index} className="text-gray-900 bg-gray-200 bg-opacity-40 p-4 rounded-lg border border-gray-300 backdrop-blur-sm my-3">
+                  {user?.username} → {bucket?.Area} ({bucket?.Terminal})
+                </li>
+              );
+            })}
+          </ul>
+    
+          <div className="flex justify-center">
+            <button
+              onClick={handleSubmit}
+              className="w-full bg-success text-white font-bold py-4 px-6 text-lg rounded-lg shadow-xl hover:bg-accent hover:scale-105 active:scale-95 transition-all duration-300 ease-in-out"
+            >
+              Enviar Asignaciones
+            </button>
+          </div>
         </div>
       </div>
-
-      {/* Lista de asignaciones actuales */}
-      <h3 className="font-semibold mt-4">Asignaciones</h3>
-      <ul>
-        {userBuckets.map((assignment, index) => {
-          const user = users.find((u) => u.id === assignment.user_id);
-          const bucket = buckets.find((b) => b.ID === assignment.bucket_id); // Usamos bucket.ID
-          return (
-            <li key={index}>
-              {user?.username} → {bucket?.Area} ({bucket?.Terminal})
-            </li>
-          );
-        })}
-      </ul>
-
-      <button
-        onClick={handleSubmit}
-        className="mt-4 bg-green-500 text-white p-2 rounded"
-      >
-        Enviar Asignaciones
-      </button>
     </div>
   );
+  
 };
 
 export default Assignments;
