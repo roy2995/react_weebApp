@@ -237,11 +237,15 @@ const CleaningReport = () => {
       const beforePhotoUrl = localStorage.getItem('beforePhotoUrl');
       const afterPhotoUrl = localStorage.getItem('afterPhotoUrl');
 
-      // JSON content object
+      // JSON content object with photos included
       const reportContent = {
         dummyData: "default value",
         tasks: taskIds.map(id => ({ ID: id, Type: 2, info: "Task information" })),
-        contingencies: contingencyIds.map(id => ({ ID: id, Type: "2", Name: "Contingency Name" }))
+        contingencies: contingencyIds.map(id => ({ ID: id, Type: "2", Name: "Contingency Name" })),
+        photos: {
+          before: beforePhotoUrl,
+          after: afterPhotoUrl
+        }
       };
       
       console.log('Generated report content:', JSON.stringify(reportContent));
