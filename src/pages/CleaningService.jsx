@@ -12,6 +12,7 @@ const CleaningReport = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [beforePhotoSaved, setBeforePhotoSaved] = useState(!!localStorage.getItem('beforePhotoUrl'));
+  const [duringPhotoSaved, setDuringPhotoSaved] = useState(!!localStorage.getItem('duringPhotoUrl'));
   const [afterPhotoSaved, setAfterPhotoSaved] = useState(!!localStorage.getItem('afterPhotoUrl'));
 
   const cloudinaryInstance = new Cloudinary({
@@ -41,6 +42,10 @@ const CleaningReport = () => {
         localStorage.setItem('beforePhotoUrl', imageUrl);
         setBeforePhotoSaved(true);
         console.log('Before photo uploaded:', imageUrl);
+      } else if (type === 'during') {
+        localStorage.setItem('duringPhotoUrl', imageUrl);
+        setDuringPhotoSaved(true);
+        console.log('During photo uploaded:', imageUrl);
       } else if (type === 'after') {
         localStorage.setItem('afterPhotoUrl', imageUrl);
         setAfterPhotoSaved(true);
@@ -235,6 +240,7 @@ const CleaningReport = () => {
       const taskIds = selectedTasks.map(task => task.progressId);
       const contingencyIds = selectedContingencies;
       const beforePhotoUrl = localStorage.getItem('beforePhotoUrl');
+      const duringPhotoUrl = localStorage.getItem('duringPhotoUrl');
       const afterPhotoUrl = localStorage.getItem('afterPhotoUrl');
 
       // JSON content object with photos included
@@ -244,6 +250,7 @@ const CleaningReport = () => {
         contingencies: contingencyIds.map(id => ({ ID: id, Type: "2", Name: "Contingency Name" })),
         photos: {
           before: beforePhotoUrl,
+          during: duringPhotoUrl,
           after: afterPhotoUrl
         }
       };
@@ -366,6 +373,16 @@ const CleaningReport = () => {
               onChange={(e) => uploadPhoto(e, 'before')}
             />
             {beforePhotoSaved ? '¡Foto Guardada!' : 'Foto Antes'}
+          </label>
+          <label className={`w-full glass text-white font-bold py-2 px-4 rounded-lg shadow-lg cursor-pointer text-center 
+            ${duringPhotoSaved ? 'bg-primary hover:bg-secondary' : 'bg-error hover:bg-red-700'}`}>
+            <input
+              type="file"
+              id="during-photo"
+              className="hidden"
+              onChange={(e) => uploadPhoto(e, 'during')}
+            />
+            {duringPhotoSaved ? '¡Foto Guardada!' : 'Foto Durante'}
           </label>
           <label className={`w-full glass text-white font-bold py-2 px-4 rounded-lg shadow-lg cursor-pointer text-center 
             ${afterPhotoSaved ? 'bg-primary hover:bg-secondary' : 'bg-error hover:bg-red-700'}`}>

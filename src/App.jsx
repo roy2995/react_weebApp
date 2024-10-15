@@ -9,6 +9,7 @@ import GeolocationCheck from './components/General/GeolocationCheck';
 import CleaningService from './pages/CleaningService';
 import Assignments from './pages/Asignaciones';
 import Dashboard from './pages/DashboardPage'; // Asegúrate de que esta ruta sea correcta
+import ContingencyReports from './pages/ContingencyReports'; // Asegúrate de que esta ruta sea correcta
 
 function App() {
   return (
@@ -40,8 +41,18 @@ function App() {
         <Route 
           path="/Dashboard" 
           element={
-            <PrivateRoute allowedRoles={['admin', 'user']}> {/* Ajusta los roles permitidos según sea necesario */}
+            <PrivateRoute allowedRoles={['admin', 'enterprise']}> {/* Ajusta los roles permitidos según sea necesario */}
               <Dashboard />
+            </PrivateRoute>
+          } 
+        />
+
+        {/* Ruta para el Reporte de Contingencias */}
+        <Route 
+          path="/ContingencyReports" 
+          element={
+            <PrivateRoute allowedRoles={['admin', 'user']}>
+              <ContingencyReports />
             </PrivateRoute>
           } 
         />
