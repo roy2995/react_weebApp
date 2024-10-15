@@ -15,12 +15,16 @@ module.exports = {
   daisyui: {
     themes: [
       {
-        myCustomTheme: {
-          primary: "#a991f7",
-          secondary: "#f6d860",
-          accent: "#37cdbe",
-          neutral: "#3d4451",
-          "base-100": "#ffffff",
+        mytheme: {
+          primary: "#1e40af",
+          secondary: "#1e40af",
+          accent: "#1e40af",
+          neutral: "#1e40af",
+          "base-100": "#2563eb",
+          info: "#bae6fd",
+          success: "#22c55e",
+          warning: "#f59e0b",
+          error: "#ef4444",
         },
       },
     ],
