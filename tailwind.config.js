@@ -1,13 +1,17 @@
 module.exports = {
   content: [
     './index.html',
-    './src/**/*.{js,jsx,ts,tsx}', 
-    './.storybook/**/*.{js,jsx,ts,tsx}', 
+    './src/**/*.{js,jsx,ts,tsx}',
+    './.storybook/**/*.{js,jsx,ts,tsx}',
+    'node_modules/flowbite-react/**/*.{js,jsx,ts,tsx}',
   ],
   theme: {
     extend: {},
   },
-  plugins: [require('daisyui')],
+  plugins: [
+    require('daisyui'),
+    require('flowbite/plugin')({ charts: true }),  // Mantén esta configuración si necesitas el soporte de Flowbite para gráficos
+  ],
   daisyui: {
     themes: [
       {
