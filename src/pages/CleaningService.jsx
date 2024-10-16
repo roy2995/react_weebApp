@@ -196,8 +196,8 @@ const CleaningReport = () => {
 
   const handleContingencyChange = async (contingencyId) => {
     const token = localStorage.getItem('token');
-    console.log(`Updating contingency ${contingencyId}...`);
-    
+    const userId = localStorage.getItem('userId');
+    const status = selectedContingencies.includes(contingencyId) ? "0" : "1";
     const updatedContingencies = selectedContingencies.includes(contingencyId)
       ? selectedContingencies.filter((id) => id !== contingencyId)
       : [...selectedContingencies, contingencyId];
@@ -205,14 +205,21 @@ const CleaningReport = () => {
     setSelectedContingencies(updatedContingencies);
     localStorage.setItem('selectedContingencies', JSON.stringify(updatedContingencies));
 
+    console.log(`Updating contingency ${contingencyId} with status ${status}...`);
+
     try {
-      const response = await fetch(`http://localhost:4000/api/contingencies/${contingencyId}`, {
-        method: 'PUT',
+      const response = await fetch(`http://localhost:4000/api/progress_contingencies`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ name: "Test Contingency", Type: "1" }),
+        body: JSON.stringify({
+          contingency_id: contingencyId,
+          status: status,
+          user_id: userId,
+          date: new Date().toISOString().slice(0, 10)
+        }),
       });
 
       if (!response.ok) {
