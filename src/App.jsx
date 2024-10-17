@@ -10,6 +10,7 @@ import CleaningService from './pages/CleaningService';
 import Assignments from './pages/Asignaciones';
 import Dashboard from './pages/DashboardPage'; // Asegúrate de que esta ruta sea correcta
 import ContingencyReports from './pages/ContingencyReports'; // Asegúrate de que esta ruta sea correcta
+import ReportPage from './pages/ReportPage'; // Asegúrate de que esta ruta sea correcta
 
 function App() {
   return (
@@ -43,6 +44,16 @@ function App() {
           element={
             <PrivateRoute allowedRoles={['admin', 'enterprise']}> {/* Ajusta los roles permitidos según sea necesario */}
               <Dashboard />
+            </PrivateRoute>
+          } 
+        />
+
+        {/* Ruta corregida para ReportPage */}
+        <Route 
+          path="/ReportPage" 
+          element={
+            <PrivateRoute allowedRoles={['admin']}>
+              <ReportPage /> {/* Cambié de Assignments a ReportPage */}
             </PrivateRoute>
           } 
         />

@@ -33,6 +33,12 @@ const Header = () => {
           >
             Contingency Report
           </Link>
+          <Link 
+            to="/ReportPage"
+            className="btn btn-ghost text-white hover:bg-blue-700 focus:bg-blue-700 text-lg font-semibold rounded-lg"
+          >
+            Report Page
+          </Link>
         </nav>
       </div>
     </header>
