@@ -1,5 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import Header from '../components/General/Header';
+import pdfMake from 'pdfmake/build/pdfmake';
+import pdfFonts from 'pdfmake/build/vfs_fonts';
+
+pdfMake.vfs = pdfFonts.pdfMake.vfs;
+
+// Función para convertir una imagen desde una URL a Base64
+const getBase64ImageFromURL = (url) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.src = url;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const dataURL = canvas.toDataURL();
+      resolve(dataURL);
+    };
+    img.onerror = error => reject(error);
+  });
+};
 
 const ReportPage = () => {
   const [reports, setReports] = useState([]);
@@ -43,22 +66,19 @@ const ReportPage = () => {
   const fetchDetailsById = async (report) => {
     const token = localStorage.getItem('token');
 
-    // === BUCKETS ===
     const bucketData = await fetchDataById(`buckets/${report.bucket_id}`, token);
     console.log('Buckets Data:', bucketData);
 
-    // Extrae IDs de las tareas y contingencias del contenido del reporte
     const content = JSON.parse(report.content);
     const progressTaskIDs = content.tasks.map(task => task.ID);
-    const contingencyIDs = content.contingencies.map(cont => cont.ID);
 
-    // Obtiene datos de cada progress_task y luego sus detalles en tasks
+    const progressContingencyIDs = content.progress_contingencies ? content.progress_contingencies.map(prog => prog.ID) : [];
+
     const taskPromises = progressTaskIDs.map(async (progressTaskId) => {
       const progressTask = await fetchDataById(`progress_tasks/${progressTaskId}`, token);
       console.log(`Progress Task ID ${progressTaskId}:`, progressTask);
 
-      // Ahora usa `task_id` del objeto `progressTask` para obtener la información detallada de la tarea
-      const taskId = progressTask[0]?.task_id;  // Usa el primer elemento del array
+      const taskId = progressTask[0]?.task_id;
       if (taskId) {
         const task = await fetchDataById(`tasks/${taskId}`, token);
         console.log(`Task Details for Task ID ${taskId}:`, task);
@@ -67,25 +87,37 @@ const ReportPage = () => {
         return { info: 'Información no disponible', status: null };
       }
     });
+
     const tasksData = await Promise.all(taskPromises);
 
-    // Obtiene datos de cada contingencia
-    const contingencyPromises = contingencyIDs.map(async (contingencyId) => {
-      const contingency = await fetchDataById(`contingencies/${contingencyId}`, token);
-      console.log(`Contingency ID ${contingencyId}:`, contingency);
+    const progressContingencyPromises = progressContingencyIDs.map(async (progressContingencyId) => {
+      const progressContingency = await fetchDataById(`progress_contingencies/${progressContingencyId}`, token);
+      console.log(`Progress Contingency ID ${progressContingencyId}:`, progressContingency);
 
-      const progressContingency = await fetchDataById(`progress_contingencies/${contingencyId}`, token);
-      console.log(`Progress Contingency ID ${contingencyId}:`, progressContingency);
+      const contingencyId = progressContingency[0]?.contingency_id;
+      if (contingencyId) {
+        const contingency = await fetchDataById(`contingencies/${contingencyId}`, token);
+        console.log(`Contingency ID ${contingencyId}:`, contingency);
 
-      return { Name: contingency[0]?.Name || 'Nombre no disponible', status: progressContingency[0]?.status };
+        return { 
+          Name: contingency[0]?.Name || 'Nombre no disponible',  
+          status: progressContingency[0]?.status || null  
+        };
+      } else {
+        return { 
+          Name: 'Nombre no disponible', 
+          status: null 
+        };
+      }
     });
-    const contingenciesData = await Promise.all(contingencyPromises);
+
+    const contingenciesData = await Promise.all(progressContingencyPromises);
 
     const details = {
       report: report,
-      bucket: bucketData,
+      bucket: bucketData[0] || {},  
       tasks: tasksData,
-      contingencies: contingenciesData,
+      contingencies: contingenciesData,  
     };
 
     setDataIndex(prevState => ({
@@ -123,31 +155,134 @@ const ReportPage = () => {
     setPreviewKey(prevKey => prevKey + 1);
   };
 
+  // Función para exportar el reporte a PDF usando pdfmake con imágenes y texto debajo
+  const exportToPdf = async () => {
+    if (!selectedReport) return;
+
+    const { report, bucket, tasks, contingencies } = selectedReport;
+    const content = JSON.parse(report.content);
+    const photos = content.photos || {};
+
+    // Convertir las imágenes a Base64
+    const beforeImage = photos.before ? await getBase64ImageFromURL(photos.before) : null;
+    const duringImage = photos.during ? await getBase64ImageFromURL(photos.during) : null;
+    const afterImage = photos.after ? await getBase64ImageFromURL(photos.after) : null;
+
+    // Definimos el contenido del PDF, incluyendo las imágenes alineadas en columnas con el texto debajo
+    const docDefinition = {
+      content: [
+        { text: 'Reporte de Actividades', style: 'header' },
+        { text: 'Este es un reporte generado automáticamente de las actividades realizadas.', margin: [0, 0, 0, 10] },
+        { text: 'Detalles del reporte:', style: 'subheader' },
+        { text: `Fecha: ${new Date(report.created_at).toLocaleDateString()}`, margin: [0, 10, 0, 10] },
+        { text: `Área: ${bucket?.Area || 'Desconocida'}`, margin: [0, 0, 0, 10] },
+        { text: `Terminal: ${bucket?.Terminal || 'Desconocida'}`, margin: [0, 0, 0, 10] },
+        { text: `Nivel: ${bucket?.Nivel || 'Desconocido'}`, margin: [0, 0, 0, 10] },
+        
+        { text: 'Tareas Realizadas:', style: 'subheader', margin: [0, 10, 0, 10] },
+        {
+          ul: tasks.map(task => `${task.info} - Estado: ${task.status ? 'Completada' : 'Pendiente'}`),
+        },
+
+        { text: 'Contingencias Encontradas:', style: 'subheader', margin: [0, 10, 0, 10] },
+        contingencies.length > 0
+          ? {
+              ul: contingencies.map(cont => `${cont.Name} - Estado: ${cont.status ? 'Resuelta' : 'Pendiente'}`),
+            }
+          : { text: 'No se encontraron contingencias.', margin: [0, 0, 0, 10] },
+
+        { text: 'Fotos:', style: 'subheader', margin: [0, 10, 0, 10] },
+
+        {
+          columns: [
+            {
+              stack: [
+                beforeImage ? { image: beforeImage, width: 150, height: 150 } : '',
+                { text: 'Antes', alignment: 'center' }
+              ]
+            },
+            {
+              stack: [
+                duringImage ? { image: duringImage, width: 150, height: 150 } : '',
+                { text: 'Durante', alignment: 'center' }
+              ]
+            },
+            {
+              stack: [
+                afterImage ? { image: afterImage, width: 150, height: 150 } : '',
+                { text: 'Después', alignment: 'center' }
+              ]
+            }
+          ],
+          columnGap: 10  // Espacio entre las columnas
+        }
+      ],
+      styles: {
+        header: { fontSize: 18, bold: true },
+        subheader: { fontSize: 14, bold: true },
+      },
+    };
+
+    // Exportamos el documento PDF
+    pdfMake.createPdf(docDefinition).download(`reporte_${report.id}.pdf`);
+  };
+
   const renderPreview = () => {
     if (!selectedReport) return null;
-    
+
     const { report, bucket, tasks, contingencies } = selectedReport;
+
+    const content = JSON.parse(report.content);
+    const photos = content.photos || {};
 
     return (
       <div key={`${report.id}-${previewKey}`} className="mb-6 p-4 bg-white rounded-lg shadow text-gray-700">
-        <p><strong>Reporte del {new Date(report.created_at).toLocaleDateString()}</strong> en el área {bucket.Area || 'Desconocida'} de la {bucket.Terminal || 'Desconocida'} nivel {bucket.Nivel || 'Desconocido'}</p>
+        <p><strong>Reporte del {new Date(report.created_at).toLocaleDateString()}</strong> en el área {bucket?.Area || 'Desconocida'} de la {bucket?.Terminal || 'Desconocida'} nivel {bucket?.Nivel || 'Desconocido'}</p>
+        
         <p><strong>Tareas Realizadas:</strong></p>
         <ul className="list-disc ml-4">
           {tasks.map((task, i) => (
             <li key={i}>{task.info || 'Información no disponible'} {task.status ? '✓' : '✘'}</li>
           ))}
         </ul>
+
         <p><strong>Contingencias Encontradas:</strong></p>
         <ul className="list-disc ml-4">
-          {contingencies.map((cont, i) => (
+          {contingencies.length > 0 ? contingencies.map((cont, i) => (
             <li key={i}>{cont.Name || 'Nombre no disponible'} {cont.status ? '✓' : '✘'}</li>
-          ))}
+          )) : (
+            <li>No se encontraron contingencias.</li>
+          )}
         </ul>
-        <div className="flex space-x-4 mt-4">
-          {report.photos?.before && <img src={report.photos.before} alt="Before" className="w-24 h-24 rounded-lg shadow" />}
-          {report.photos?.during && <img src={report.photos.during} alt="During" className="w-24 h-24 rounded-lg shadow" />}
-          {report.photos?.after && <img src={report.photos.after} alt="After" className="w-24 h-24 rounded-lg shadow" />}
+
+        <div className="flex flex-wrap space-x-4 mt-4">
+          {photos.before && (
+            <div className="flex flex-col items-center">
+              <img src={photos.before} alt="Before" className="w-32 h-32 object-cover rounded-lg shadow" />
+              <span className="mt-2 text-sm text-gray-600">Antes</span>
+            </div>
+          )}
+          {photos.during && (
+            <div className="flex flex-col items-center">
+              <img src={photos.during} alt="During" className="w-32 h-32 object-cover rounded-lg shadow" />
+              <span className="mt-2 text-sm text-gray-600">Durante</span>
+            </div>
+          )}
+          {photos.after && (
+            <div className="flex flex-col items-center">
+              <img src={photos.after} alt="After" className="w-32 h-32 object-cover rounded-lg shadow" />
+              <span className="mt-2 text-sm text-gray-600">Después</span>
+            </div>
+          )}
         </div>
+
+        {/* Botón para exportar el reporte a PDF */}
+        <button
+          onClick={exportToPdf}
+          className="mt-6 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg hover:bg-green-600 transition duration-200"
+        >
+          Exportar a PDF
+        </button>
       </div>
     );
   };
