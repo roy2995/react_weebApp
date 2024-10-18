@@ -4,96 +4,62 @@ import * as echarts from 'echarts';
 
 const AreaChart = ({ dateData, completedValues, notCompletedValues }) => {
   const chartRef = useRef(null);
+  const chartInstance = useRef(null);
 
   useEffect(() => {
-    const chartInstance = echarts.init(chartRef.current);
+    const initializeChart = () => {
+      if (chartRef.current) {
+        chartInstance.current = echarts.init(chartRef.current);
 
-    const option = {
-      tooltip: {
-        trigger: 'axis',
-        position: function (pt) {
-          return [pt[0], '10%'];
-        }
-      },
-      title: {
-        left: 'center',
-        text: 'Gráfico de Área Combinado'
-      },
-      legend: {
-        top: 20,
-        data: ['Completadas', 'No Completadas']
-      },
-      toolbox: {
-        feature: {
-          dataZoom: {
-            yAxisIndex: 'none'
+        const option = {
+          tooltip: { trigger: 'axis' },
+          legend: {
+            data: ['Completadas', 'No Completadas'],
+            textStyle: { color: '#fff' }
           },
-          restore: {},
-          saveAsImage: {}
-        }
-      },
-      xAxis: {
-        type: 'category',
-        boundaryGap: false,
-        data: dateData
-      },
-      yAxis: {
-        type: 'value',
-        boundaryGap: [0, '100%']
-      },
-      series: [
-        {
-          name: 'Completadas',
-          type: 'line',
-          symbol: 'none',
-          sampling: 'lttb',
-          itemStyle: {
-            color: 'rgb(0, 200, 255)'
+          xAxis: {
+            type: 'category',
+            data: dateData,
+            axisLabel: { color: '#ddd', fontSize: 12 }
           },
-          areaStyle: {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              {
-                offset: 0,
-                color: 'rgb(0, 200, 255)'
-              },
-              {
-                offset: 1,
-                color: 'rgb(0, 150, 200)'
-              }
-            ])
+          yAxis: {
+            type: 'value',
+            axisLabel: { color: '#ddd', fontSize: 12 }
           },
-          data: completedValues
-        },
-        {
-          name: 'No Completadas',
-          type: 'line',
-          symbol: 'none',
-          sampling: 'lttb',
-          itemStyle: {
-            color: 'rgb(255, 70, 131)'
-          },
-          areaStyle: {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              {
-                offset: 0,
-                color: 'rgb(255, 158, 68)'
-              },
-              {
-                offset: 1,
-                color: 'rgb(255, 70, 131)'
-              }
-            ])
-          },
-          data: notCompletedValues
-        }
-      ]
+          series: [
+            {
+              name: 'Completadas',
+              type: 'line',
+              data: completedValues,
+              areaStyle: { color: 'rgba(0, 200, 255, 0.6)' },
+              itemStyle: { color: '#00C8FF' }
+            },
+            {
+              name: 'No Completadas',
+              type: 'line',
+              data: notCompletedValues,
+              areaStyle: { color: 'rgba(255, 70, 131, 0.6)' },
+              itemStyle: { color: '#FF4683' }
+            }
+          ]
+        };
+
+        chartInstance.current.setOption(option);
+
+        // Ajustar el gráfico al redimensionar la ventana
+        const resizeChart = () => {
+          chartInstance.current && chartInstance.current.resize();
+        };
+        window.addEventListener('resize', resizeChart);
+
+        return () => {
+          window.removeEventListener('resize', resizeChart);
+          chartInstance.current && chartInstance.current.dispose();
+        };
+      }
     };
 
-    chartInstance.setOption(option);
-
-    return () => {
-      chartInstance.dispose();
-    };
+    initializeChart();
   }, [dateData, completedValues, notCompletedValues]);
 
   return (
@@ -101,13 +67,11 @@ const AreaChart = ({ dateData, completedValues, notCompletedValues }) => {
       ref={chartRef}
       style={{
         width: '100%',
-        height: '400px',
-        background: 'rgba(255, 255, 255, 0.2)',
+        height: '100%',
+        background: 'rgba(0, 23, 95, 0.8)',
         borderRadius: '15px',
         backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
-        boxShadow: '0 4px 10px rgba(0, 0, 0, 0.3)',
-        border: '1px solid rgba(255, 255, 255, 0.3)',
+        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1)',
       }}
     ></div>
   );
