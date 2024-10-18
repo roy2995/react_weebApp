@@ -4,12 +4,14 @@ import WeatherChartLayout from '../layouts/charts/WeatherChartLayout';
 import WeatherPieChartLayout from '../layouts/charts/WeatherPieChartLayout';
 import CalendarHeatmapChartLayout from '../layouts/charts/CalendarHeatmapChartLayout';
 import AreaChartLayout from '../layouts/charts/AreaChartLayout';
+import Header from '../components/General/Header';
 
 const DashboardPage = () => {
   const [filter, setFilter] = useState('day');
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-blue-500 to-blue-400">
+      <Header /> {/* Header Importado */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl w-full">
   
         {/* Filtro Global */}

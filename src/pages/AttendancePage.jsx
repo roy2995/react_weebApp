@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Header from "../components/General/Header";
 //Hasta la fecha no entiendo muy bien por que este modulo sigue aqui, pero tendrian que preguntarle a roderick si se esta usando para algo,
 //Por mi lado pues la ultima vez que revise no se esta utilizando en ningun modulo, pero deberias de revisar si en el de login se implementa
 const AttendancePage = () => {
@@ -81,6 +82,7 @@ const AttendancePage = () => {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100">
+            <Header /> {/* Header Importado */}
             <h1 className="text-3xl font-bold">Bienvenido a la Página de Asistencia</h1>
             {error && <p className="text-red-500">{error}</p>}
             {attendanceData && <p className="text-green-500">Asistencia verificada con éxito</p>}
