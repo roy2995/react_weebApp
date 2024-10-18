@@ -110,38 +110,16 @@ const WeatherChartLayout = ({ filter }) => {
 
   useEffect(() => {
     fetchTaskData();
-  }, [filter]); // Actualiza cuando el filtro cambia
+  }, [filter]);
 
   return (
-    <div 
-      className="weather-chart-layout"
-      style={{
-        background: 'rgba(31, 76, 232, 0.85)', 
-        borderRadius: '15px',
-        backdropFilter: 'blur(12px)', 
-        WebkitBackdropFilter: 'blur(12px)', 
-        boxShadow: '0 6px 15px rgba(0, 0, 0, 0.1)', 
-        border: '1px solid rgba(0, 0, 0, 0.1)', 
-        padding: '1.5rem',
-        marginBottom: '2rem',
-        width: '100%',
-        maxWidth: '100%',
-        height: '100%',
-        color: '#333',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between'
-      }}
-    >
-      <h2 className="text-xl font-semibold mb-4" style={{ color: '#333' }}>Gráfico de Tareas por Tipo de Bucket y Total Diario</h2>
-
-      {loading && <p>Cargando datos...</p>}
-      {error && <p className="text-red-500">{error}</p>}
-      
-      {!loading && !error && (
-        <div style={{ flexGrow: 1 }}>
-          <WeatherChart data={taskData} dailyCounts={dailyCounts} />
-        </div>
+    <div className="w-full h-full">
+      {loading ? (
+        <p className="text-gray-300">Cargando datos...</p>
+      ) : error ? (
+        <p className="text-red-400">{error}</p>
+      ) : (
+        <WeatherChart data={taskData} dailyCounts={dailyCounts} />
       )}
     </div>
   );

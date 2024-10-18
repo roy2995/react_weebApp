@@ -4,62 +4,82 @@ import * as echarts from 'echarts';
 
 const CalendarHeatmapChart = ({ data }) => {
   const chartRef = useRef(null);
+  const chartInstance = useRef(null);
 
   useEffect(() => {
-    const chartInstance = echarts.init(chartRef.current);
+    const initializeChart = () => {
+      if (chartRef.current) {
+        chartInstance.current = echarts.init(chartRef.current);
 
-    const option = {
-      title: {
-        top: 30,
-        left: 'center',
-        text: 'Contingencias Diarias'
-      },
-      tooltip: {},
-      visualMap: {
-        min: 0,
-        max: data.length ? Math.max(...data.map(item => item[1])) : 10,
-        type: 'piecewise',
-        orient: 'horizontal',
-        left: 'center',
-        top: 65
-      },
-      calendar: {
-        top: 120,
-        left: 30,
-        right: 30,
-        cellSize: ['auto', 13],
-        range: '2016', // Año fijo, se puede ajustar según necesidad
-        itemStyle: {
-          borderWidth: 0.5
-        },
-        yearLabel: { show: false }
-      },
-      series: {
-        type: 'heatmap',
-        coordinateSystem: 'calendar',
-        data: data // Los datos son recibidos como una propiedad
+        const option = {
+          tooltip: {
+            formatter: '{b}: {c}',
+            backgroundColor: '#091057',
+            textStyle: { color: '#FFFFFF' },
+            borderColor: '#737373',
+            borderWidth: 1,
+          },
+          visualMap: {
+            min: 0,
+            max: Math.max(...data.map(item => item[1])),
+            type: 'piecewise',
+            orient: 'horizontal',
+            left: 'center',
+            top: -1,
+            inRange: { color: ['#f5e8c8', '#d94e5d'] },
+            textStyle: { color: '#FFFFFF' }
+          },
+          calendar: {
+            top: 40,
+            left: 10,
+            right: 10,
+            bottom: 10,
+            cellSize: ['auto', 25],
+            range: new Date().getFullYear().toString(),
+            itemStyle: {
+              borderWidth: 1,
+              borderColor: 'rgba(255, 255, 255, 0.2)',
+              color: 'rgba(200, 200, 200, 0.2)'
+            },
+            dayLabel: { color: '#FFFFFF' },
+            monthLabel: { color: '#FFFFFF' }
+          },
+          series: {
+            name: 'Contingencias',
+            type: 'heatmap',
+            coordinateSystem: 'calendar',
+            data: data
+          }
+        };
+
+        chartInstance.current.setOption(option);
+
+        // Ajustar el gráfico al redimensionar la ventana
+        const resizeChart = () => {
+          chartInstance.current && chartInstance.current.resize();
+        };
+        window.addEventListener('resize', resizeChart);
+
+        return () => {
+          window.removeEventListener('resize', resizeChart);
+          chartInstance.current && chartInstance.current.dispose();
+        };
       }
     };
 
-    chartInstance.setOption(option);
-
-    return () => {
-      chartInstance.dispose();
-    };
+    initializeChart();
   }, [data]);
 
   return (
-    <div 
-      ref={chartRef} 
+    <div
+      ref={chartRef}
       style={{
         width: '100%',
-        height: '300px',
-        background: 'rgba(255, 255, 255, 0.2)',
+        height: '100%',
+        background: 'rgba(0, 23, 95, 0.8)',
         borderRadius: '15px',
         backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
-        boxShadow: '0 4px 10px rgba(0, 0, 0, 0.3)',
-        border: '1px solid rgba(255, 255, 255, 0.3)',
+        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1)',
       }}
     ></div>
   );

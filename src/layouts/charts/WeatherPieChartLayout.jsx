@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import WeatherPieChart from '../../components/charts/WeatherPieChart';
 
-const WeatherPieChartLayout = ({ filter }) => { // Recibe el filtro como prop
+const WeatherPieChartLayout = ({ filter }) => {
   const [taskData, setTaskData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -46,7 +46,7 @@ const WeatherPieChartLayout = ({ filter }) => { // Recibe el filtro como prop
       }
 
       const taskMap = tasksData.body.reduce((acc, task) => {
-        if (task.Type !== 7) { // Omitimos el tipo 7
+        if (task.Type !== 7) {
           acc[task.ID] = typeMapping[task.Type];
         }
         return acc;
@@ -78,28 +78,17 @@ const WeatherPieChartLayout = ({ filter }) => { // Recibe el filtro como prop
 
   useEffect(() => {
     fetchData();
-  }, [filter]); // Actualiza los datos cada vez que el filtro cambia
+  }, [filter]);
 
   return (
-    <div 
-      className="weather-pie-chart-layout"
-      style={{
-        background: 'rgba(255, 255, 255, 0.85)',
-        borderRadius: '15px',
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
-        boxShadow: '0 6px 15px rgba(0, 0, 0, 0.1)',
-        padding: '1.5rem',
-        marginBottom: '2rem',
-        width: '100%',
-        maxWidth: '100%',
-        color: '#333',
-      }}
-    >
-      <h2 className="text-xl font-semibold mb-4" style={{ color: '#333' }}>Gráfico de Tipos de Tareas</h2>
-      {loading && <p>Cargando datos...</p>}
-      {error && <p className="text-red-500">{error}</p>}
-      {!loading && !error && <WeatherPieChart data={taskData} />}
+    <div className="w-full h-full">
+      {loading ? (
+        <p className="text-gray-300">Cargando datos...</p>
+      ) : error ? (
+        <p className="text-red-400">{error}</p>
+      ) : (
+        <WeatherPieChart data={taskData} />
+      )}
     </div>
   );
 };
