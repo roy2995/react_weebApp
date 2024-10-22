@@ -9,6 +9,7 @@ const CleaningReport = () => {
   const [contingencies, setContingencies] = useState(JSON.parse(localStorage.getItem('contingencies')) || []);
   const [selectedTasks, setSelectedTasks] = useState(JSON.parse(localStorage.getItem('selectedTasks')) || []);
   const [selectedContingencies, setSelectedContingencies] = useState(JSON.parse(localStorage.getItem('selectedContingencies')) || []);
+  const [contingencyProgressData, setContingencyProgressData] = useState(JSON.parse(localStorage.getItem('contingencyProgressData')) || []);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [beforePhotoSaved, setBeforePhotoSaved] = useState(!!localStorage.getItem('beforePhotoUrl'));
@@ -194,42 +195,23 @@ const CleaningReport = () => {
     console.log('Updated task progress in cache:', updatedTasks);
   };
 
-  const handleContingencyChange = async (contingencyId) => {
-    const token = localStorage.getItem('token');
-    const userId = localStorage.getItem('userId');
+  const handleContingencyChange = (contingencyId) => {
     const status = selectedContingencies.includes(contingencyId) ? "0" : "1";
     const updatedContingencies = selectedContingencies.includes(contingencyId)
       ? selectedContingencies.filter((id) => id !== contingencyId)
       : [...selectedContingencies, contingencyId];
 
+    const updatedProgressData = updatedContingencies.map((id) => ({
+      contingencyId: id,
+      status: updatedContingencies.includes(id) ? 1 : 0,
+    }));
+
     setSelectedContingencies(updatedContingencies);
+    setContingencyProgressData(updatedProgressData);
     localStorage.setItem('selectedContingencies', JSON.stringify(updatedContingencies));
+    localStorage.setItem('contingencyProgressData', JSON.stringify(updatedProgressData));
 
-    console.log(`Updating contingency ${contingencyId} with status ${status}...`);
-
-    try {
-      const response = await fetch(`http://localhost:4000/api/progress_contingencies`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          contingency_id: contingencyId,
-          status: status,
-          user_id: userId,
-          date: new Date().toISOString().slice(0, 10)
-        }),
-      });
-
-      if (!response.ok) {
-        console.error(`Failed to update contingency ${contingencyId}, status code: ${response.status}`);
-        throw new Error(`Error updating contingency ${contingencyId}`);
-      }
-      console.log(`Contingency ${contingencyId} updated successfully.`);
-    } catch (error) {
-      console.error('Error updating contingency:', error);
-    }
+    console.log('Contingency updated:', updatedProgressData);
   };
 
   const handleSubmit = async () => {
@@ -244,25 +226,48 @@ const CleaningReport = () => {
         throw new Error("No authorization token found");
       }
 
-      const taskIds = selectedTasks.map(task => task.progressId);
-      const contingencyIds = selectedContingencies;
-      const beforePhotoUrl = localStorage.getItem('beforePhotoUrl');
-      const duringPhotoUrl = localStorage.getItem('duringPhotoUrl');
-      const afterPhotoUrl = localStorage.getItem('afterPhotoUrl');
+      // 1. Post the progress contingencies and get their unique IDs
+      const progressContingenciesToPost = contingencyProgressData.filter(contingency => contingency.status === 1);
+      const progressContingencyIds = await Promise.all(progressContingenciesToPost.map(async (contingency) => {
+        const response = await fetch(`http://localhost:4000/api/progress_contingencies`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            contingency_id: contingency.contingencyId,
+            status: "1",
+            user_id: userId,
+            date: new Date().toISOString().slice(0, 10)
+          })
+        });
 
+        if (!response.ok) {
+          throw new Error(`Error posting progress contingency ${contingency.contingencyId}`);
+        }
+
+        const data = await response.json();
+        return { contingencyId: contingency.contingencyId, progressId: data.body.id };
+      }));
+
+      // 2. Map the progress contingency IDs to the report content
+      const taskIds = selectedTasks.map(task => task.progressId);
       const reportContent = {
         dummyData: "default value",
         tasks: taskIds.map(id => ({ ID: id, Type: 2, info: "Task information" })),
-        contingencies: contingencyIds.map(id => ({ ID: id, Type: "2", Name: "Contingency Name" })),
+        contingencies: progressContingencyIds.map(c => ({ ID: c.progressId, Type: "2", Name: "Contingency Progress" })),
         photos: {
-          before: beforePhotoUrl,
-          during: duringPhotoUrl,
-          after: afterPhotoUrl
+          before: localStorage.getItem('beforePhotoUrl'),
+          during: localStorage.getItem('duringPhotoUrl'),
+          after: localStorage.getItem('afterPhotoUrl')
         }
       };
       
       console.log('Generated report content:', JSON.stringify(reportContent));
 
+      // 3. Finally, submit the report with a contingency ID or null
+      const firstContingencyId = selectedContingencies.length > 0 ? selectedContingencies[0] : null;
       const reportResponse = await fetch(`http://localhost:4000/api/reports`, {
         method: 'POST',
         headers: {
@@ -273,7 +278,7 @@ const CleaningReport = () => {
           content: reportContent,
           user_id: userId,
           bucket_id: bucketId,
-          contingencies_id: contingencyIds[0] || null
+          contingencies_id: firstContingencyId || null
         })
       });
 
@@ -282,53 +287,6 @@ const CleaningReport = () => {
       }
 
       console.log('Report successfully posted.');
-
-      await Promise.all(selectedTasks.map(async task => {
-        const url = task.progressId
-          ? `http://localhost:4000/api/progress_tasks/${task.progressId}`
-          : `http://localhost:4000/api/progress_tasks`;
-        
-        const method = task.progressId ? 'PUT' : 'POST';
-        const bodyData = task.progressId
-          ? { task_id: task.taskId, status: task.status, user_id: userId, date: new Date().toISOString().slice(0, 10) }
-          : { task_id: task.taskId, status: task.status, user_id: userId, date: new Date().toISOString().slice(0, 10) };
-
-        const response = await fetch(url, {
-          method,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(bodyData)
-        });
-        
-        if (!response.ok) {
-          console.error(`Failed to ${method === 'POST' ? 'create' : 'update'} progress task ${task.taskId}, status code: ${response.status}`);
-        } else {
-          console.log(`Progress task ${task.taskId} ${method === 'POST' ? 'created' : 'updated'} with status ${task.status}`);
-        }
-      }));
-
-      await Promise.all(selectedContingencies.map(async contingencyId => {
-        const response = await fetch(`http://localhost:4000/api/progress_contingencies`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            contingency_id: contingencyId,
-            status: "1",
-            user_id: userId,
-            date: new Date().toISOString().slice(0, 10)
-          })
-        });
-        if (!response.ok) {
-          console.error(`Failed to update progress contingency ${contingencyId}, status code: ${response.status}`);
-        } else {
-          console.log(`Progress contingency ${contingencyId} updated to status 1`);
-        }
-      }));
 
       console.log('All progress tasks and contingencies updated successfully.');
       localStorage.clear(); 
