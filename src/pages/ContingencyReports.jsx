@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Cloudinary } from '@cloudinary/url-gen';
+import Header from "../components/General/Header";
 
 const ContingencyReport = () => {
   const [area, setArea] = useState(JSON.parse(localStorage.getItem('area')) || {});
@@ -154,6 +155,7 @@ const ContingencyReport = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-blue-500 to-blue-400">
+      <Header /> {/* Header Importado */}
       {loading ? <p>Cargando...</p> : (
         <div className="max-w-lg w-full bg-white bg-opacity-30 backdrop-blur-lg p-8 rounded-2xl shadow-lg border border-white/30">
           

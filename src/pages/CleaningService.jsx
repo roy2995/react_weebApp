@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Cloudinary } from '@cloudinary/url-gen';
 import { useNavigate } from 'react-router-dom';
+import Header from "../components/General/Header";
 
 const CleaningReport = () => {
   const navigate = useNavigate();
@@ -308,8 +309,10 @@ const CleaningReport = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-blue-500 to-blue-400">
-      <div className="max-w-lg w-full bg-white bg-opacity-30 backdrop-blur-lg p-8 rounded-2xl shadow-lg transition-transform duration-300 border border-white/30">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-600 via-blue-500 to-blue-400 pt-20" style={{ marginTop: '2rem' }}>
+      <Header /> {/* Header Importado */}
+      <div className="max-w-4xl w-full bg-white bg-opacity-30 backdrop-blur-lg p-8 rounded-2xl shadow-lg border border-white/30">
+        {/* Información del Área */}
         <div className="mb-6">
           <label className="font-semibold block mb-2 text-gray-700">
             <strong>Área Asignada:</strong>
@@ -318,7 +321,8 @@ const CleaningReport = () => {
             {area.Area} ({area.Tipo}), Terminal: {area.Terminal}, Nivel: {area.Nivel}
           </p>
         </div>
-  
+
+        {/* Tareas a realizar */}
         <div className="mb-6">
           <label className="font-semibold block mb-2 text-gray-700">
             <strong>Tareas a realizar:</strong>
@@ -337,7 +341,8 @@ const CleaningReport = () => {
             ))}
           </ul>
         </div>
-  
+
+        {/* Contingencias */}
         <div className="mb-6">
           <label className="font-semibold block mb-2 text-red-700">
             <strong>Contingencias:</strong>
@@ -356,7 +361,8 @@ const CleaningReport = () => {
             ))}
           </ul>
         </div>
-  
+
+        {/* Fotos */}
         <div className="mb-6 flex flex-col space-y-2">
           <label className={`w-full glass text-white font-bold py-2 px-4 rounded-lg shadow-lg cursor-pointer text-center 
             ${beforePhotoSaved ? 'bg-primary hover:bg-secondary' : 'bg-error hover:bg-red-700'}`}>
@@ -389,10 +395,11 @@ const CleaningReport = () => {
             {afterPhotoSaved ? '¡Foto Guardada!' : 'Foto Después'}
           </label>
         </div>
-  
+
+        {/* Botón de enviar */}
         <button 
           onClick={handleSubmit} 
-          className="w-full glass bg-primary text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:bg-accent hover:scale-105 active:scale-95 transition-all duration-300 ease-in-out disabled:bg-gray-400"
+          className="w-full glass bg-primary text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:bg-accent hover:scale-105 active:scale-95 transition-all duration-300 ease-in-out disabled:bg-gray-400 mt-8"
         >
           Enviar Reporte
         </button>
