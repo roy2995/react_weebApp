@@ -1,10 +1,17 @@
-import { Pie } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import React from 'react';
+import Chart from 'react-apexcharts';
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+const PieChart = ({ series = [], options = {} }) => {
+  // Verifica si los datos necesarios están disponibles
+  if (!series.length || !options) {
+    return <p className="text-gray-500">Cargando datos del PieChart...</p>;
+  }
 
-function PieChart({ data }) {
-  return <Pie data={data} />;
-}
+  return (
+    <div>
+      <Chart options={options} series={series} type="pie" height={350} />
+    </div>
+  );
+};
 
 export default PieChart;

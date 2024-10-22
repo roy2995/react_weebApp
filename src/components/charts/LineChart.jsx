@@ -1,10 +1,17 @@
-import { Line } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import React from 'react';
+import Chart from 'react-apexcharts';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+const LineChart = ({ series, categories }) => {
+  const options = {
+    chart: {
+      type: 'line',
+    },
+    xaxis: {
+      categories: categories
+    }
+  };
 
-function LineChart({ data }) {
-  return <Line data={data} />;
-}
+  return <Chart options={options} series={series} type="line" height={350} />;
+};
 
 export default LineChart;

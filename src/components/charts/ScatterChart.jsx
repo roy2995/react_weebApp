@@ -1,10 +1,24 @@
-import { Scatter } from 'react-chartjs-2';
-import { Chart as ChartJS, LinearScale, PointElement, Tooltip, Legend } from 'chart.js';
+import React from 'react';
+import Chart from 'react-apexcharts';
 
-ChartJS.register(LinearScale, PointElement, Tooltip, Legend);
+const ScatterChart = ({ series }) => {
+  const options = {
+    chart: {
+      type: 'scatter',
+      zoom: {
+        enabled: true,
+        type: 'xy'
+      }
+    },
+    xaxis: {
+      tickAmount: 10,
+    },
+    yaxis: {
+      tickAmount: 7,
+    }
+  };
 
-function ScatterChart({ data }) {
-  return <Scatter data={data} />;
-}
+  return <Chart options={options} series={series} type="scatter" height={350} />;
+};
 
 export default ScatterChart;
