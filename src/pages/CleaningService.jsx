@@ -72,7 +72,7 @@ const CleaningReport = () => {
         }
 
         console.log('Fetching user bucket...');
-        const userBucketResponse = await fetch(`http://localhost:4000/api/user_buckets?user_id=${userId}`, {
+        const userBucketResponse = await fetch(`https://webapi-f01g.onrender.com/api/user_buckets?user_id=${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!userBucketResponse.ok) {
@@ -94,7 +94,7 @@ const CleaningReport = () => {
 
         if (storedBucketId !== bucketId.toString() || !localStorage.getItem('area') || !localStorage.getItem('tasks')) {
           console.log('Fetching bucket details...');
-          const bucketResponse = await fetch(`http://localhost:4000/api/buckets/${bucketId}`, {
+          const bucketResponse = await fetch(`https://webapi-f01g.onrender.com/api/buckets/${bucketId}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           const bucketData = await bucketResponse.json();
@@ -103,7 +103,7 @@ const CleaningReport = () => {
           localStorage.setItem('area', JSON.stringify(bucket));
 
           console.log('Fetching tasks...');
-          const tasksResponse = await fetch(`http://localhost:4000/api/tasks`, {
+          const tasksResponse = await fetch(`https://webapi-f01g.onrender.com/api/tasks`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           const allTasksData = await tasksResponse.json();
@@ -114,7 +114,7 @@ const CleaningReport = () => {
           const progressBucketId = localStorage.getItem('progressBucketId');
           if (!progressBucketId) {
             console.log('No cached bucket progress found. Creating new progress bucket...');
-            const createBucketResponse = await fetch(`http://localhost:4000/api/progress_buckets`, {
+            const createBucketResponse = await fetch(`https://webapi-f01g.onrender.com/api/progress_buckets`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -143,7 +143,7 @@ const CleaningReport = () => {
           if (cachedSelectedTasks.length === 0) {
             console.log('No cached task progress found. Creating new progress for tasks...');
             const taskProgressIds = await Promise.all(filteredTasks.map(async (task) => {
-              const response = await fetch(`http://localhost:4000/api/progress_tasks`, {
+              const response = await fetch(`https://webapi-f01g.onrender.com/api/progress_tasks`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -166,7 +166,7 @@ const CleaningReport = () => {
           }
 
           console.log('Fetching contingencies...');
-          const contingenciesResponse = await fetch(`http://localhost:4000/api/contingencies`, {
+          const contingenciesResponse = await fetch(`https://webapi-f01g.onrender.com/api/contingencies`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           const allContingenciesData = await contingenciesResponse.json();
@@ -230,7 +230,7 @@ const CleaningReport = () => {
       // 1. Post the progress contingencies and get their unique IDs
       const progressContingenciesToPost = contingencyProgressData.filter(contingency => contingency.status === 1);
       const progressContingencyIds = await Promise.all(progressContingenciesToPost.map(async (contingency) => {
-        const response = await fetch(`http://localhost:4000/api/progress_contingencies`, {
+        const response = await fetch(`https://webapi-f01g.onrender.com/api/progress_contingencies`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -269,7 +269,7 @@ const CleaningReport = () => {
 
       // 3. Finally, submit the report with a contingency ID or null
       const firstContingencyId = selectedContingencies.length > 0 ? selectedContingencies[0] : null;
-      const reportResponse = await fetch(`http://localhost:4000/api/reports`, {
+      const reportResponse = await fetch(`https://webapi-f01g.onrender.com/api/reports`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

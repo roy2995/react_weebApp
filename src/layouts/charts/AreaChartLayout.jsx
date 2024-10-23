@@ -13,21 +13,21 @@ const AreaChartLayout = () => {
     const token = localStorage.getItem('token');
     try {
       const [taskResponse, bucketResponse, contingencyResponse] = await Promise.all([
-        fetch('http://localhost:4000/api/progress_tasks', {
+        fetch('https://webapi-f01g.onrender.com/api/progress_tasks', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`
           }
         }),
-        fetch('http://localhost:4000/api/progress_buckets', {
+        fetch('https://webapi-f01g.onrender.com/api/progress_buckets', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`
           }
         }),
-        fetch('http://localhost:4000/api/progress_contingencies', {
+        fetch('https://webapi-f01g.onrender.com/api/progress_contingencies', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

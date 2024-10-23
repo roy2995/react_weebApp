@@ -47,7 +47,7 @@ const ContingencyReport = () => {
         const token = localStorage.getItem('token');
         
         console.log('Fetching area data...');
-        const areaResponse = await fetch('http://localhost:4000/api/buckets', {
+        const areaResponse = await fetch('https://webapi-f01g.onrender.com/api/buckets', {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!areaResponse.ok) {
@@ -61,7 +61,7 @@ const ContingencyReport = () => {
         console.log('Area data:', areaData);
 
         console.log('Fetching contingencies...');
-        const contingenciesResponse = await fetch('http://localhost:4000/api/contingencies', {
+        const contingenciesResponse = await fetch('https://webapi-f01g.onrender.com/api/contingencies', {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!contingenciesResponse.ok) {
@@ -125,7 +125,7 @@ const ContingencyReport = () => {
 
       console.log('Generated report content:', JSON.stringify(reportContent));
 
-      const reportResponse = await fetch('http://localhost:4000/api/reports', {
+      const reportResponse = await fetch('https://webapi-f01g.onrender.com/api/reports', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

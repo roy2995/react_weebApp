@@ -11,7 +11,7 @@ const CalendarHeatmapChartLayout = ({ filter }) => {
     const token = localStorage.getItem('token');
     
     try {
-      const response = await fetch(`http://localhost:4000/api/progress_contingencies?filter=${filter}`, {
+      const response = await fetch(`https://webapi-f01g.onrender.com/api/progress_contingencies?filter=${filter}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

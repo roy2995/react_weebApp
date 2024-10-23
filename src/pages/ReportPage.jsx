@@ -48,7 +48,7 @@ const ReportPage = () => {
 
   const fetchData = async (endpoint, token) => {
     try {
-      const response = await fetch(`http://localhost:4000/api/${endpoint}`, {
+      const response = await fetch(`https://webapi-f01g.onrender.com/api/${endpoint}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await response.json();
