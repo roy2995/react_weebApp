@@ -20,7 +20,7 @@ const WeatherChartLayout = ({ filter }) => {
   const fetchTaskData = async () => {
     const token = localStorage.getItem('token');
     try {
-      const taskResponse = await fetch('http://localhost:4000/api/progress_buckets', {
+      const taskResponse = await fetch('https://webapi-f01g.onrender.com/api/progress_buckets', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -33,7 +33,7 @@ const WeatherChartLayout = ({ filter }) => {
         throw new Error('Error al obtener los datos de tareas');
       }
 
-      const bucketResponse = await fetch('http://localhost:4000/api/buckets', {
+      const bucketResponse = await fetch('https://webapi-f01g.onrender.com/api/buckets', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

@@ -13,7 +13,7 @@ const Assignments = () => {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:4000/api/users', {
+      const response = await fetch('https://webapi-f01g.onrender.com/api/users', {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
@@ -28,7 +28,7 @@ const Assignments = () => {
   const fetchBuckets = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:4000/api/buckets', {
+      const response = await fetch('https://webapi-f01g.onrender.com/api/buckets', {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
@@ -78,7 +78,7 @@ const Assignments = () => {
       userBuckets.forEach(async (assignment) => {
         const { user_id, bucket_id } = assignment;
 
-        const response = await fetch(`http://localhost:4000/api/user_buckets/${user_id}`, {
+        const response = await fetch(`https://webapi-f01g.onrender.com/api/user_buckets/${user_id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

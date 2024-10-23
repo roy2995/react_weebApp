@@ -22,7 +22,7 @@ function Login() {
         console.log(`Verificando asistencia para el usuario con ID: ${userId}`);
 
         try {
-            const response = await fetch(`http://localhost:4000/api/attendance/today/${userId}`, {
+            const response = await fetch(`https://webapi-f01g.onrender.com/api/attendance/today/${userId}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -56,7 +56,7 @@ function Login() {
         }
 
         try {
-            const responseAttendance = await fetch(`http://localhost:4000/api/attendance`, {
+            const responseAttendance = await fetch(`https://webapi-f01g.onrender.com/api/attendance`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -115,7 +115,7 @@ function Login() {
 
         try {
             // Autenticar primero
-            const response = await fetch('http://localhost:4000/api/Users/login', {
+            const response = await fetch('https://webapi-f01g.onrender.com/api/Users/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

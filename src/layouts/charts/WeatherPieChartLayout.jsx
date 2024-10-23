@@ -20,14 +20,14 @@ const WeatherPieChartLayout = ({ filter }) => {
     const token = localStorage.getItem('token');
     try {
       const [progressTaskResponse, tasksResponse] = await Promise.all([
-        fetch(`http://localhost:4000/api/progress_tasks?filter=${filter}`, {
+        fetch(`https://webapi-f01g.onrender.com/api/progress_tasks?filter=${filter}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`
           }
         }),
-        fetch('http://localhost:4000/api/tasks', {
+        fetch('https://webapi-f01g.onrender.com/api/tasks', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

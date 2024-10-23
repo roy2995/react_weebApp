@@ -8,7 +8,7 @@ const PrivateRoute = ({ children, allowedRoles }) => {
 
     // Si no hay token o el rol no está permitido, redirigir al login o a una página no autorizada
     if (!token || !allowedRoles.includes(role)) {
-        return <Navigate to="/login" />;
+        return <Navigate to="/" />;
     }
 
     // Si el rol está permitido, mostrar el componente hijo (es decir, la página protegida)
