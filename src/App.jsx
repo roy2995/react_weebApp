@@ -48,16 +48,6 @@ function App() {
           } 
         />
 
-        {/* Ruta corregida para ReportPage */}
-        <Route 
-          path="/ReportPage" 
-          element={
-            <PrivateRoute allowedRoles={['admin']}>
-              <ReportPage /> {/* Cambié de Assignments a ReportPage */}
-            </PrivateRoute>
-          } 
-        />
-
         {/* Ruta para el Reporte de Contingencias */}
         <Route 
           path="/ContingencyReports" 
