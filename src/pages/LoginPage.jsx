@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { User, Lock } from 'lucide-react';
 import logo from '../assets/logo.jpg';
 import GeolocationCheck from '../components/General/GeolocationCheck';
-import LocationMap from '../Components/General/LocationMap';
+import LocationMap from '../components/General/LocationMap';
 
 function Login() {
     const [username, setUsername] = useState('');

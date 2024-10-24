@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import Header from '../components/General/Header';
 import pdfMake from 'pdfmake/build/pdfmake';
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
-
-
 pdfMake.vfs = pdfFonts.pdfMake.vfs;
+
 
 // Función para convertir una imagen desde una URL a Base64
 const getBase64ImageFromURL = (url) => {
