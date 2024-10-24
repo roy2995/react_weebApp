@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Header from "../components/General/Header";
-import logo from '../Assets/logo.jpg';
+import logo from '../assets/logo.jpg';
 
 const Assignments = () => {
   const [users, setUsers] = useState([]);
