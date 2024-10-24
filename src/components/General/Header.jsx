@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import logo from '../../Assets/logo.jpg'; // Asegúrate de que esta ruta sea correcta
+import logo from '../../assets/logo.jpg'; // Asegúrate de que esta ruta sea correcta
 import { useEffect, useState } from 'react';
 
 const Header = () => {
