@@ -38,12 +38,12 @@ const Header = () => {
               >
                 Dashboard
               </Link>
-              {/* <Link 
+              <Link 
                 to="/ReportPage"
                 className="btn btn-ghost text-white hover:bg-blue-700 focus:bg-blue-700 text-lg font-semibold rounded-lg"
               >
                 Report Page
-              </Link> */}
+              </Link>
               <Link 
                 to="/ContingencyReports"
                 className="btn btn-ghost text-white hover:bg-blue-700 focus:bg-blue-700 text-lg font-semibold rounded-lg"
