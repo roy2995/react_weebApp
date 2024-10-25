@@ -7,7 +7,6 @@ import CleaningService from './pages/CleaningService';
 import Assignments from './pages/Asignaciones';
 import Dashboard from './pages/DashboardPage';
 import ContingencyReports from './pages/ContingencyReports';
-import ReportPage from './pages/ReportPage';
 
 function App() {
   const routes = [
@@ -16,7 +15,6 @@ function App() {
     { path: "/assignments", element: <Assignments />, roles: ['admin'] },
     { path: "/Dashboard", element: <Dashboard />, roles: ['admin', 'enterprise'] },
     { path: "/ContingencyReports", element: <ContingencyReports />, roles: ['admin', 'user'] },
-    { path: "/ReportPage", element: <ReportPage />, roles: ['admin', 'enterprise'] }, // Nueva ruta agregada
   ];
 
   return (
