@@ -1,16 +1,12 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './pages/LoginPage';
-import AttendancePage from './pages/AttendancePage';
 import PrivateRoute from './components/PrivateRoute';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import LocationMap from './components/General/LocationMap';
-import GeolocationCheck from './components/General/GeolocationCheck';
 import CleaningService from './pages/CleaningService';
 import Assignments from './pages/Asignaciones';
 import Dashboard from './pages/DashboardPage';
 import ContingencyReports from './pages/ContingencyReports';
-import ReportPage from './pages/ReportPage';
 
 function App() {
   const routes = [
