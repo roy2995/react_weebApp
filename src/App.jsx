@@ -7,6 +7,7 @@ import CleaningService from './pages/CleaningService';
 import Assignments from './pages/Asignaciones';
 import Dashboard from './pages/DashboardPage';
 import ContingencyReports from './pages/ContingencyReports';
+import ReportsPage from './pages/ReportsPage'; // Importa la nueva página
 
 function App() {
   const routes = [
@@ -15,6 +16,7 @@ function App() {
     { path: "/assignments", element: <Assignments />, roles: ['admin'] },
     { path: "/Dashboard", element: <Dashboard />, roles: ['admin', 'enterprise'] },
     { path: "/ContingencyReports", element: <ContingencyReports />, roles: ['admin', 'user'] },
+    { path: "/ReportsPage", element: <ReportsPage />, roles: ['admin', 'enterprise'] }, // Nueva ruta
   ];
 
   return (
