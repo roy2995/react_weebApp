@@ -106,7 +106,7 @@ const Assignments = () => {
       <Header /> {/* Header Importado */}
       
       <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
-        <div className="max-w-xl w-full bg-white bg-opacity-40 backdrop-blur-lg p-12 rounded-2xl shadow-xl transition-transform duration-300 border border-white/30">
+        <div className="max-w-xl w-full bg-white bg-opacity-40 backdrop-blur-lg p-6 rounded-2xl shadow-xl transition-transform duration-300 border border-white/30">
           <h2 className="text-2xl font-bold mb-6 text-center text-gray-900">Asignación de Tareas</h2>
           
           {/* Dropdown para seleccionar usuario */}
@@ -133,7 +133,7 @@ const Assignments = () => {
           <div className="mb-8">
             <h3 className="font-semibold text-gray-900 text-center">Tarea</h3>
             <select
-              className="select select-bordered w-full mt-4 bg-gray-200 bg-opacity-40 backdrop-blur-sm rounded-lg border border-gray-300 text-gray-900 text-lg py-3 px-4 leading-tight text-center"
+              className="select select-bordered w-full mt-4 bg-gray-200 bg-opacity-40 backdrop-blur-sm rounded-lg border border-gray-300 text-gray-900 text-lg py-3 px-4 leading-tight text-center overflow-hidden whitespace-nowrap overflow-ellipsis"
               style={{ minWidth: "300px" }}
               value={selectedBucket}
               onChange={(e) => {
@@ -186,7 +186,6 @@ const Assignments = () => {
       </div>
     </div>
   );
-  
 };
 
 export default Assignments;
