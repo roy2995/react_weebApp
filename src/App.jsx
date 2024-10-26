@@ -7,7 +7,7 @@ import CleaningService from './pages/CleaningService';
 import Assignments from './pages/Asignaciones';
 import Dashboard from './pages/DashboardPage';
 import ContingencyReports from './pages/ContingencyReports';
-import ReportsPage from './pages/ReportsPage'; // Importa la nueva página
+import ReportsPage from './pages/ReportPage'; // Importa la nueva página
 
 function App() {
   const routes = [
