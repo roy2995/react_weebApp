@@ -111,7 +111,6 @@ const ContingencyReport = () => {
         throw new Error("No authorization token found");
       }
 
-      // Generar el contenido del reporte con la estructura correcta y Report_Type
       const reportContent = {
         Report_Type: "Contingency",
         dummyData: "default value",
@@ -154,10 +153,10 @@ const ContingencyReport = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-blue-500 to-blue-400">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-600 via-blue-500 to-blue-400 pt-20">
       <Header /> {/* Header Importado */}
       {loading ? <p>Cargando...</p> : (
-        <div className="max-w-lg w-full bg-white bg-opacity-30 backdrop-blur-lg p-8 rounded-2xl shadow-lg border border-white/30">
+        <div className="max-w-lg w-full bg-white bg-opacity-30 backdrop-blur-lg p-6 md:p-8 rounded-2xl shadow-lg border border-white/30">
           
           {/* Selector de Área */}
           <div className="mb-6">
@@ -165,7 +164,7 @@ const ContingencyReport = () => {
               <strong>Área Asignada:</strong>
             </label>
             <select 
-              className="w-full p-3 rounded-lg border border-gray-300 bg-gray-100 text-gray-700 bg-opacity-20 backdrop-blur-sm"
+              className="select select-bordered w-full p-3 rounded-lg border border-gray-300 bg-gray-100 text-gray-700 bg-opacity-20 backdrop-blur-sm"
               value={area.ID} 
               onChange={handleAreaChange}
             >
@@ -187,9 +186,9 @@ const ContingencyReport = () => {
                     type="checkbox"
                     checked={selectedContingencies.includes(contingency.ID)}
                     onChange={() => handleContingencyChange(contingency.ID)}
-                    className="mr-2 w-5 h-5 rounded-full focus:ring-2 focus:ring-red-500"
+                    className="checkbox checkbox-primary mr-2 w-5 h-5 rounded-full focus:ring-2 focus:ring-red-500"
                   />
-                  <span className="text-gray-800">{contingency.Name}</span>
+                  <span className="text-gray-800 text-sm md:text-base">{contingency.Name}</span>
                 </label>
               ))}
             </div>

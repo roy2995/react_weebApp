@@ -33,7 +33,7 @@ const Header = () => {
               {role === 'admin' && (
                 <>
                   <li>
-                    <Link to="/asignaciones" className="text-white text-lg font-semibold">Asignaciones</Link>
+                    <Link to="/Assignments" className="text-white text-lg font-semibold">Asignaciones</Link>
                   </li>
                   <li>
                     <Link to="/dashboard" className="text-white text-lg font-semibold">Dashboard</Link>
