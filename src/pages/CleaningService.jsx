@@ -336,7 +336,7 @@ const CleaningReport = () => {
                   onChange={() => handleTaskChange(task.ID)}
                   className="mr-2 w-5 h-5 rounded-full focus:ring-2 focus:ring-blue-500"
                 />
-                <span className="text-gray-800">{task.info}</span>
+                <span className="text-gray-800 text-sm md:text-base">{task.info}</span>
               </li>
             ))}
           </ul>
@@ -356,7 +356,7 @@ const CleaningReport = () => {
                   onChange={() => handleContingencyChange(contingency.ID)}
                   className="mr-2 w-5 h-5 rounded-full focus:ring-2 focus:ring-red-500"
                 />
-                <span className="text-gray-800">{contingency.Name}</span>
+                <span className="text-gray-800 text-sm md:text-base">{contingency.Name}</span>
               </li>
             ))}
           </ul>
