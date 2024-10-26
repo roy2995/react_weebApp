@@ -65,7 +65,7 @@ const Header = () => {
           {role === 'admin' && (
             <>
               <Link 
-                to="/asignaciones"
+                to="/assignments"
                 className="btn btn-ghost text-white hover:bg-blue-700 focus:bg-blue-700 text-lg font-semibold rounded-lg"
               >
                 Asignaciones
@@ -77,7 +77,7 @@ const Header = () => {
                 Dashboard
               </Link>
               <Link 
-                to="/ReportPage"
+                to="/ReportsPage"
                 className="btn btn-ghost text-white hover:bg-blue-700 focus:bg-blue-700 text-lg font-semibold rounded-lg"
               >
                 Report Page
