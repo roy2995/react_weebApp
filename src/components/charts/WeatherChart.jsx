@@ -8,6 +8,10 @@ const WeatherChart = ({ data, dailyCounts }) => {
   useEffect(() => {
     const initializeChart = () => {
       if (chartRef.current) {
+        if (chartInstance.current) {
+          chartInstance.current.dispose(); // Elimina la instancia anterior
+        }
+
         chartInstance.current = echarts.init(chartRef.current);
 
         const types = Object.keys(data);
@@ -70,6 +74,7 @@ const WeatherChart = ({ data, dailyCounts }) => {
         const resizeChart = () => {
           chartInstance.current && chartInstance.current.resize();
         };
+
         window.addEventListener('resize', resizeChart);
 
         return () => {

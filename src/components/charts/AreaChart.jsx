@@ -1,4 +1,3 @@
-// src/components/charts/AreaChart.jsx
 import React, { useEffect, useRef } from 'react';
 import * as echarts from 'echarts';
 
@@ -9,6 +8,11 @@ const AreaChart = ({ dateData, completedValues, notCompletedValues }) => {
   useEffect(() => {
     const initializeChart = () => {
       if (chartRef.current) {
+        // Verifica si ya hay una instancia de ECharts
+        if (chartInstance.current) {
+          chartInstance.current.dispose(); // Elimina la instancia anterior
+        }
+
         chartInstance.current = echarts.init(chartRef.current);
 
         const option = {
@@ -46,10 +50,10 @@ const AreaChart = ({ dateData, completedValues, notCompletedValues }) => {
 
         chartInstance.current.setOption(option);
 
-        // Ajustar el gráfico al redimensionar la ventana
         const resizeChart = () => {
           chartInstance.current && chartInstance.current.resize();
         };
+
         window.addEventListener('resize', resizeChart);
 
         return () => {

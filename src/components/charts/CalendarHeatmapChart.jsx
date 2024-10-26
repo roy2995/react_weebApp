@@ -1,4 +1,3 @@
-// src/components/charts/CalendarHeatmapChart.jsx
 import React, { useEffect, useRef } from 'react';
 import * as echarts from 'echarts';
 
@@ -9,6 +8,10 @@ const CalendarHeatmapChart = ({ data }) => {
   useEffect(() => {
     const initializeChart = () => {
       if (chartRef.current) {
+        if (chartInstance.current) {
+          chartInstance.current.dispose(); // Elimina la instancia anterior
+        }
+
         chartInstance.current = echarts.init(chartRef.current);
 
         const option = {
@@ -54,10 +57,10 @@ const CalendarHeatmapChart = ({ data }) => {
 
         chartInstance.current.setOption(option);
 
-        // Ajustar el gráfico al redimensionar la ventana
         const resizeChart = () => {
           chartInstance.current && chartInstance.current.resize();
         };
+
         window.addEventListener('resize', resizeChart);
 
         return () => {

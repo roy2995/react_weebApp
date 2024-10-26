@@ -8,6 +8,10 @@ const WeatherPieChart = ({ data }) => {
   useEffect(() => {
     const initializeChart = () => {
       if (chartRef.current) {
+        if (chartInstance.current) {
+          chartInstance.current.dispose(); // Elimina la instancia anterior
+        }
+
         chartInstance.current = echarts.init(chartRef.current);
 
         const option = {
@@ -54,10 +58,10 @@ const WeatherPieChart = ({ data }) => {
 
         chartInstance.current.setOption(option);
 
-        // Manejar redimensionamiento
         const resizeChart = () => {
           chartInstance.current && chartInstance.current.resize();
         };
+
         window.addEventListener('resize', resizeChart);
 
         return () => {
