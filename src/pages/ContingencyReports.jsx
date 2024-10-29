@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Cloudinary } from '@cloudinary/url-gen';
 import Header from "../components/General/Header";
+import { useNavigate } from 'react-router-dom';
 
 const ContingencyReport = () => {
   const [area, setArea] = useState(JSON.parse(localStorage.getItem('area')) || {});
@@ -11,6 +12,7 @@ const ContingencyReport = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const navigate = useNavigate();
   const cloudinaryInstance = new Cloudinary({
     cloud: { cloudName: 'dbl7m4sha' },
   });
@@ -21,8 +23,6 @@ const ContingencyReport = () => {
     formData.append('file', file);
     formData.append('upload_preset', 'Reportes de Contingencias');
 
-    console.log(`Uploading contingency photo ${index + 1}...`);
-    
     try {
       const response = await fetch(`https://api.cloudinary.com/v1_1/dbl7m4sha/image/upload`, {
         method: 'POST',
@@ -34,7 +34,6 @@ const ContingencyReport = () => {
       updatedPhotoUrls[index] = data.secure_url;
       setPhotoUrls(updatedPhotoUrls);
       localStorage.setItem('photoUrls', JSON.stringify(updatedPhotoUrls));
-      console.log(`Photo ${index + 1} uploaded:`, data.secure_url);
     } catch (error) {
       console.error('Error uploading photo:', error);
     }
@@ -46,7 +45,6 @@ const ContingencyReport = () => {
         setLoading(true);
         const token = localStorage.getItem('token');
         
-        console.log('Fetching area data...');
         const areaResponse = await fetch('https://webapi-f01g.onrender.com/api/buckets', {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -58,9 +56,7 @@ const ContingencyReport = () => {
         setAllAreas(areaData.body);
         setArea(areaData.body[0]);
         localStorage.setItem('area', JSON.stringify(areaData.body[0]));
-        console.log('Area data:', areaData);
 
-        console.log('Fetching contingencies...');
         const contingenciesResponse = await fetch('https://webapi-f01g.onrender.com/api/contingencies', {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -71,7 +67,6 @@ const ContingencyReport = () => {
         const contingenciesData = await contingenciesResponse.json();
         setContingencies(contingenciesData.body);
         localStorage.setItem('contingencies', JSON.stringify(contingenciesData.body));
-        console.log('Contingencies data:', contingenciesData);
         
         setLoading(false);
       } catch (err) {
@@ -88,7 +83,6 @@ const ContingencyReport = () => {
     const selectedArea = allAreas.find(area => area.ID === parseInt(event.target.value));
     setArea(selectedArea);
     localStorage.setItem('area', JSON.stringify(selectedArea));
-    console.log('Selected area:', selectedArea);
   };
 
   const handleContingencyChange = (id) => {
@@ -97,7 +91,6 @@ const ContingencyReport = () => {
       : [...selectedContingencies, id];
     setSelectedContingencies(updatedSelectedContingencies);
     localStorage.setItem('selectedContingencies', JSON.stringify(updatedSelectedContingencies));
-    console.log('Updated selected contingencies:', updatedSelectedContingencies);
   };
 
   const handleSubmit = async () => {
@@ -106,6 +99,7 @@ const ContingencyReport = () => {
       const token = localStorage.getItem('token');
       const userId = localStorage.getItem('userId');
       const bucketId = area.ID;
+      const role = localStorage.getItem('role');
 
       if (!token) {
         throw new Error("No authorization token found");
@@ -121,8 +115,6 @@ const ContingencyReport = () => {
           after: photoUrls[2] || null
         }
       };
-
-      console.log('Generated report content:', JSON.stringify(reportContent));
 
       const reportResponse = await fetch('https://webapi-f01g.onrender.com/api/reports', {
         method: 'POST',
@@ -143,8 +135,19 @@ const ContingencyReport = () => {
       }
 
       console.log('Report successfully posted.');
-      localStorage.clear();
-      window.location.reload();
+      
+      // Elimina solo las claves específicas en lugar de `localStorage.clear()`
+      localStorage.removeItem('area');
+      localStorage.removeItem('contingencies');
+      localStorage.removeItem('selectedContingencies');
+      localStorage.removeItem('photoUrls');
+
+      // Redirige según el rol
+      if (role === 'admin') {
+        navigate('/ReportsPage');
+      } else if (role === 'user') {
+        navigate('/cleaningservice');
+      }
     } catch (error) {
       console.error('Error submitting report:', error);
     } finally {
