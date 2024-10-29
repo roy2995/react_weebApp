@@ -86,6 +86,10 @@ const WeatherPieChartLayout = ({ filter }) => {
         <p className="text-gray-300">Cargando datos...</p>
       ) : error ? (
         <p className="text-red-400">{error}</p>
+      ) : taskData.length === 0 ? (
+        <p className="text-gray-300">
+          En estos momentos no hay datos para mostrarle en forma gráfica
+        </p>
       ) : (
         <WeatherPieChart data={taskData} />
       )}
