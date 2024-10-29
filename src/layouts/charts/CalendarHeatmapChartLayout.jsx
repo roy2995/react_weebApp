@@ -1,4 +1,3 @@
-// src/layouts/charts/CalendarHeatmapChartLayout.jsx
 import React, { useState, useEffect } from 'react';
 import CalendarHeatmapChart from '../../components/charts/CalendarHeatmapChart';
 
@@ -66,6 +65,10 @@ const CalendarHeatmapChartLayout = ({ filter }) => {
         <p className="text-gray-300">Cargando datos...</p>
       ) : error ? (
         <p className="text-red-400">{error}</p>
+      ) : data.length === 0 ? (
+        <p className="text-gray-300">
+          En estos momentos no hay datos para mostrarle en forma gráfica
+        </p>
       ) : (
         <CalendarHeatmapChart data={data} />
       )}

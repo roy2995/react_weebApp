@@ -1,10 +1,9 @@
-// src/layouts/charts/WeatherChartLayout.jsx
 import React, { useEffect, useState } from 'react';
 import WeatherChart from '../../components/charts/WeatherChart';
 
 const WeatherChartLayout = ({ filter }) => {
   const [taskData, setTaskData] = useState({});
-  const [dailyCounts, setDailyCounts] = useState({ dailyTotals: [] });
+  const [dailyCounts, setDailyCounts] = useState({ dates: [], dailyTotals: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -118,6 +117,10 @@ const WeatherChartLayout = ({ filter }) => {
         <p className="text-gray-300">Cargando datos...</p>
       ) : error ? (
         <p className="text-red-400">{error}</p>
+      ) : Object.keys(taskData).length === 0 || dailyCounts.dailyTotals.length === 0 ? (
+        <p className="text-gray-300">
+          En estos momentos no hay datos para mostrarle en forma gráfica
+        </p>
       ) : (
         <WeatherChart data={taskData} dailyCounts={dailyCounts} />
       )}

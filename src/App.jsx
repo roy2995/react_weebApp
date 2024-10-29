@@ -15,8 +15,8 @@ function App() {
     { path: "/CleaningService", element: <CleaningService />, roles: ['user'] },
     { path: "/assignments", element: <Assignments />, roles: ['admin'] },
     { path: "/Dashboard", element: <Dashboard />, roles: ['admin', 'enterprise'] },
-    { path: "/ContingencyReports", element: <ContingencyReports />, roles: ['admin', 'user'] },
-    { path: "/ReportsPage", element: <ReportsPage />, roles: ['admin', 'enterprise'] }, // Nueva ruta
+    { path: "/ContingencyReports", element: <ContingencyReports />, roles: ['admin', 'user'] }, // Aquí envolvemos en PrivateRoute
+    { path: "/ReportsPage", element: <ReportsPage />, roles: ['admin', 'enterprise'] },
   ];
 
   return (

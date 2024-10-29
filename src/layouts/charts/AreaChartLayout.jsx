@@ -1,4 +1,3 @@
-// src/layouts/charts/AreaChartLayout.jsx
 import React, { useState, useEffect } from 'react';
 import AreaChart from '../../components/charts/AreaChart';
 
@@ -89,6 +88,10 @@ const AreaChartLayout = () => {
         <p className="text-gray-300">Cargando datos...</p>
       ) : error ? (
         <p className="text-red-400">{error}</p>
+      ) : dateData.length === 0 ? (
+        <p className="text-gray-300">
+          En estos momentos no hay datos para mostrarle en forma gráfica
+        </p>
       ) : (
         <AreaChart
           dateData={dateData}
