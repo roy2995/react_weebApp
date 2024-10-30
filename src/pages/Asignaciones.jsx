@@ -101,6 +101,13 @@ const Assignments = () => {
     }
   };
 
+  // Nueva función para eliminar una asignación de la lista
+  const handleDeleteAssignment = (index) => {
+    const updatedAssignments = userBuckets.filter((_, i) => i !== index);
+    setUserBuckets(updatedAssignments);
+    console.log("Assignment removed:", updatedAssignments);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-500 to-blue-400 p-10">
       <Header /> {/* Header Importado */}
@@ -144,7 +151,7 @@ const Assignments = () => {
               <option value="">Seleccionar Tarea</option>
               {buckets.map((bucket) => (
                 <option key={bucket.ID} value={bucket.ID}>
-                  {`(Area: ${bucket.Area}, Terminal: ${bucket.Terminal})`}
+                  {`(Area: ${bucket.Area}, Terminal: ${bucket.Terminal}, Nivel: ${bucket.Nivel})`}
                 </option>
               ))}
             </select>
@@ -160,15 +167,21 @@ const Assignments = () => {
             </button>
           </div>
     
-          {/* Lista de asignaciones actuales */}
+          {/* Lista de asignaciones actuales con botón para eliminar */}
           <h3 className="font-semibold text-center text-gray-900 mb-4">Asignaciones</h3>
           <ul className="list-disc list-inside text-center mb-8 text-gray-900">
             {userBuckets.map((assignment, index) => {
               const user = users.find((u) => u.id === assignment.user_id);
               const bucket = buckets.find((b) => b.ID === assignment.bucket_id);
               return (
-                <li key={index} className="text-gray-900 bg-gray-200 bg-opacity-40 p-4 rounded-lg border border-gray-300 backdrop-blur-sm my-3">
-                  {user?.username} → {bucket?.Area} ({bucket?.Terminal})
+                <li key={index} className="text-gray-900 bg-gray-200 bg-opacity-40 p-4 rounded-lg border border-gray-300 backdrop-blur-sm my-3 flex justify-between items-center">
+                  {user?.username} → {bucket?.Area} ({bucket?.Terminal}, Nivel: {bucket?.Nivel})
+                  <button
+                    onClick={() => handleDeleteAssignment(index)}
+                    className="ml-4 text-red-600 font-semibold hover:underline"
+                  >
+                    Eliminar
+                  </button>
                 </li>
               );
             })}
