@@ -1,5 +1,5 @@
 // src/pages/DashboardPage.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import WeatherChartLayout from '../layouts/charts/WeatherChartLayout';
 import WeatherPieChartLayout from '../layouts/charts/WeatherPieChartLayout';
 import CalendarHeatmapChartLayout from '../layouts/charts/CalendarHeatmapChartLayout';
@@ -8,6 +8,16 @@ import Header from '../components/General/Header';
 
 const DashboardPage = () => {
   const [filter, setFilter] = useState('day');
+  const [refreshKey, setRefreshKey] = useState(0); // Estado para forzar el re-renderizado
+
+  useEffect(() => {
+    // Configura el intervalo para refrescar los datos
+    const interval = setInterval(() => {
+      setRefreshKey((prevKey) => prevKey + 1); // Incrementa el valor para forzar actualización
+    }, 60000); // Actualiza cada 60 segundos (ajústalo a tu preferencia)
+
+    return () => clearInterval(interval); // Limpia el intervalo al desmontar el componente
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-blue-500 to-blue-400">
@@ -32,26 +42,24 @@ const DashboardPage = () => {
   
         {/* Gráficos en Tarjetas */}
         <div className="card bg-[#091057]/30 backdrop-blur-md p-6 rounded-xl shadow-lg border border-white/20 h-96 transition-transform duration-300">
-          <WeatherChartLayout filter={filter} />
+          <WeatherChartLayout filter={filter} refreshKey={refreshKey} />
         </div>
         
         <div className="card bg-[#091057]/30 backdrop-blur-md p-6 rounded-xl shadow-lg border border-white/20 h-96 transition-transform duration-300">
-          <WeatherPieChartLayout filter={filter} />
+          <WeatherPieChartLayout filter={filter} refreshKey={refreshKey} />
         </div>
         
         <div className="card bg-[#091057]/30 backdrop-blur-md p-6 rounded-xl shadow-lg border border-white/20 h-96 transition-transform duration-300">
-          <CalendarHeatmapChartLayout filter={filter} />
+          <CalendarHeatmapChartLayout filter={filter} refreshKey={refreshKey} />
         </div>
   
         {/* Gráfico de Área ocupa toda la fila */}
         <div className="lg:col-span-3 card bg-[#091057]/30 backdrop-blur-md p-6 rounded-xl shadow-lg border border-white/20 h-96 transition-transform duration-300">
-          <AreaChartLayout />
+          <AreaChartLayout filter={filter} refreshKey={refreshKey} />
         </div>
       </div>
     </div>
   );
-  
-  
 };
 
 export default DashboardPage;
