@@ -8,12 +8,9 @@ const WeatherPieChartLayout = ({ filter }) => {
   const [error, setError] = useState(null);
 
   const typeMapping = {
-    1: 'Baños',
-    2: 'Oficinas',
-    3: 'Exteriores',
-    4: 'Food Courts',
-    5: 'Estacionamientos',
-    6: 'Sin Resolver'
+    7: 'Baños',
+    8: 'Food Court',
+    9: 'Pasillos'
   };
 
   const fetchData = async () => {
@@ -46,7 +43,7 @@ const WeatherPieChartLayout = ({ filter }) => {
       }
 
       const taskMap = tasksData.body.reduce((acc, task) => {
-        if (task.Type !== 7) {
+        if ([7, 8, 9].includes(task.Type)) {
           acc[task.ID] = typeMapping[task.Type];
         }
         return acc;
