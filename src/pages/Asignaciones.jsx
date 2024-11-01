@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import Header from "../components/General/Header";
-import logo from '../assets/logo.jpg';
 
 const Assignments = () => {
   const [users, setUsers] = useState([]);
@@ -32,8 +31,15 @@ const Assignments = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
-      if (response.ok) setBuckets(data.body);
-      console.log("Buckets fetched:", data.body);
+      
+      if (response.ok) {
+        // Filtrar solo los buckets con Tipo 8, 9 o 10
+        const filteredBuckets = data.body.filter(bucket => 
+          bucket.Tipo === "8" || bucket.Tipo === "9" || bucket.Tipo === "10"
+        );
+        setBuckets(filteredBuckets);
+        console.log("Buckets fetched:", filteredBuckets);
+      }
     } catch (error) {
       console.error('Error fetching buckets:', error);
     }
@@ -48,9 +54,8 @@ const Assignments = () => {
   const handleAssign = () => {
     console.log("Assign button clicked");
     console.log("Selected User ID:", selectedUser);
-    console.log("Selected Bucket ID:", selectedBucket); // Aquí debe ser el ID del bucket
+    console.log("Selected Bucket ID:", selectedBucket);
 
-    // Validación: asegurarse de que el usuario y el bucket han sido seleccionados
     if (!selectedUser || !selectedBucket) {
       console.log("Debe seleccionar tanto un usuario como una tarea.");
       alert("Debe seleccionar tanto un usuario como una tarea.");
@@ -58,12 +63,13 @@ const Assignments = () => {
     }
 
     const user = users.find((user) => user.id === parseInt(selectedUser));
-    const bucket = buckets.find((bucket) => bucket.ID === parseInt(selectedBucket)); // Cambié bucket.id a bucket.ID, basado en la estructura de tu base de datos
+    const bucket = buckets.find((bucket) => bucket.ID === parseInt(selectedBucket));
 
     if (user && bucket) {
-      console.log(`Asignando usuario ${user.username} al bucket ${bucket.ID}`);
       const updatedAssignments = [...userBuckets, { user_id: user.id, bucket_id: bucket.ID }];
       setUserBuckets(updatedAssignments);
+      setSelectedUser('');
+      setSelectedBucket('');
       console.log("Updated assignments:", updatedAssignments);
     } else {
       console.log("User or Bucket not found.");
@@ -74,8 +80,7 @@ const Assignments = () => {
   const handleSubmit = async () => {
     try {
       const token = localStorage.getItem('token');
-      // Hacer un forEach sobre las asignaciones de userBuckets
-      userBuckets.forEach(async (assignment) => {
+      const updatePromises = userBuckets.map(async (assignment) => {
         const { user_id, bucket_id } = assignment;
 
         const response = await fetch(`https://webapi-f01g.onrender.com/api/user_buckets/${user_id}`, {
@@ -84,16 +89,16 @@ const Assignments = () => {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ bucket_id }), // Solo enviar bucket_id en el cuerpo
+          body: JSON.stringify({ bucket_id }),
         });
 
         if (!response.ok) {
           console.error(`Error updating assignment for user ${user_id}:`, response.status);
-        } else {
-          console.log(`Assignment updated successfully for user ${user_id}`);
+          throw new Error(`Error updating assignment for user ${user_id}`);
         }
       });
 
+      await Promise.all(updatePromises);
       alert('Assignments updated successfully');
     } catch (error) {
       console.error('Error updating assignments:', error);
@@ -103,7 +108,7 @@ const Assignments = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-500 to-blue-400 p-10">
-      <Header /> {/* Header Importado */}
+      <Header />
       
       <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
         <div className="max-w-xl w-full bg-white bg-opacity-40 backdrop-blur-lg p-6 rounded-2xl shadow-xl transition-transform duration-300 border border-white/30">
@@ -144,7 +149,7 @@ const Assignments = () => {
               <option value="">Seleccionar Tarea</option>
               {buckets.map((bucket) => (
                 <option key={bucket.ID} value={bucket.ID}>
-                  {`(Area: ${bucket.Area}, Terminal: ${bucket.Terminal})`}
+                  {bucket.Area} {/* Solo muestra el nombre del área */}
                 </option>
               ))}
             </select>
@@ -168,7 +173,7 @@ const Assignments = () => {
               const bucket = buckets.find((b) => b.ID === assignment.bucket_id);
               return (
                 <li key={index} className="text-gray-900 bg-gray-200 bg-opacity-40 p-4 rounded-lg border border-gray-300 backdrop-blur-sm my-3">
-                  {user?.username} → {bucket?.Area} ({bucket?.Terminal})
+                  {user?.username} → {bucket?.Area}
                 </li>
               );
             })}
