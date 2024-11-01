@@ -53,9 +53,15 @@ const ContingencyReport = () => {
         }
 
         const areaData = await areaResponse.json();
-        setAllAreas(areaData.body);
-        setArea(areaData.body[0]);
-        localStorage.setItem('area', JSON.stringify(areaData.body[0]));
+        
+        // Filtrar solo las áreas con Tipo 8, 9 o 10
+        const filteredAreas = areaData.body.filter(area => 
+          area.Tipo === "8" || area.Tipo === "9" || area.Tipo === "10"
+        );
+        
+        setAllAreas(filteredAreas);
+        setArea(filteredAreas[0] || {}); // Selecciona la primera área disponible en el filtro
+        localStorage.setItem('area', JSON.stringify(filteredAreas[0] || {}));
 
         const contingenciesResponse = await fetch('https://webapi-f01g.onrender.com/api/contingencies', {
           headers: { Authorization: `Bearer ${token}` },
@@ -157,7 +163,7 @@ const ContingencyReport = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-600 via-blue-500 to-blue-400 pt-20">
-      <Header /> {/* Header Importado */}
+      <Header />
       {loading ? <p>Cargando...</p> : (
         <div className="max-w-lg w-full bg-white bg-opacity-30 backdrop-blur-lg p-6 md:p-8 rounded-2xl shadow-lg border border-white/30">
           

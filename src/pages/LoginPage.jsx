@@ -192,10 +192,10 @@ function Login() {
                 {userRole === 'user' && !isLocationChecked ? (
                     <GeolocationCheck
                         desiredArea={{
-                            minLat: 8.967785707528074,
-                            maxLat: 8.976632818766214,
-                            minLon: -79.549044455311,
-                            maxLon: -79.55468726479876,
+                            minLat: 8.967837456917607,
+                            maxLat: 8.978305025095445,
+                            minLon: -79.55476749829865,
+                            maxLon: -79.54941554890956,
                         }}
                         onSuccess={handleLocationSuccess}
                         onFailure={handleLocationFailure}
