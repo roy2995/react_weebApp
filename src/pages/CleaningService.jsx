@@ -11,6 +11,7 @@ const CleaningReport = () => {
   const [selectedTasks, setSelectedTasks] = useState(JSON.parse(localStorage.getItem('selectedTasks')) || []);
   const [selectedContingencies, setSelectedContingencies] = useState(JSON.parse(localStorage.getItem('selectedContingencies')) || []);
   const [contingencyProgressData, setContingencyProgressData] = useState(JSON.parse(localStorage.getItem('contingencyProgressData')) || []);
+  const [TaskProgressData, setTaskProgressData] = useState(JSON.parse(localStorage.getItem('TaskProgressData')) || []);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [beforePhotoSaved, setBeforePhotoSaved] = useState(!!localStorage.getItem('beforePhotoUrl'));
@@ -186,14 +187,21 @@ const CleaningReport = () => {
     fetchUserData();
   }, [navigate]);
 
-  const handleTaskChange = (taskId) => {
-    console.log('Task selected:', taskId);
-    const updatedTasks = selectedTasks.map((task) =>
-      task.taskId === taskId ? { ...task, status: task.status === 0 ? 1 : 0 } : task
-    );
-    setSelectedTasks(updatedTasks);
+  const updatedTasks = selectedTasks.includes(taskId)
+      ? selectedTasks.filter((id) => id !== taskId)
+      : [...selectedTasks, taskId];
+
+    const updatedProgressData = updatedTasks.map((id) => ({
+      taskId: id,
+      status: updatedTasks.includes(id) ? 1 : 0,
+    }));
+
+setSelectedTasks(updatedTasks);
+    setTaskProgressData(updatedProgressData);
     localStorage.setItem('selectedTasks', JSON.stringify(updatedTasks));
-    console.log('Updated task progress in cache:', updatedTasks);
+    localStorage.setItem('TaskProgressData', JSON.stringify(updatedProgressData));
+
+    console.log('Task updated:', updatedProgressData);
   };
 
   const handleContingencyChange = (contingencyId) => {
@@ -243,6 +251,7 @@ const CleaningReport = () => {
             date: new Date().toISOString().slice(0, 10)
           })
         });
+        
 
         if (!response.ok) {
           throw new Error(`Error posting progress contingency ${contingency.contingencyId}`);
