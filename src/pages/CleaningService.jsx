@@ -139,33 +139,7 @@ const CleaningReport = () => {
           } else {
             console.log('Cached progress bucket found with ID:', progressBucketId);
           }
-
-          const cachedSelectedTasks = JSON.parse(localStorage.getItem('selectedTasks')) || [];
-          if (cachedSelectedTasks.length === 0) {
-            console.log('No cached task progress found. Creating new progress for tasks...');
-            const taskProgressIds = await Promise.all(filteredTasks.map(async (task) => {
-              const response = await fetch(`https://webapi-f01g.onrender.com/api/progress_tasks`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                  task_id: task.ID,
-                  status: 0,
-                  user_id: userId,
-                  date: new Date().toISOString().slice(0, 10),
-                }),
-              });
-              const data = await response.json();
-              return { taskId: task.ID, progressId: data.body.id, status: 0 };
-            }));
-            setSelectedTasks(taskProgressIds);
-            localStorage.setItem('selectedTasks', JSON.stringify(taskProgressIds));
-          } else {
-            setSelectedTasks(cachedSelectedTasks);
-          }
-
+          
           console.log('Fetching contingencies...');
           const contingenciesResponse = await fetch(`https://webapi-f01g.onrender.com/api/contingencies`, {
             headers: { Authorization: `Bearer ${token}` },
@@ -196,7 +170,7 @@ const CleaningReport = () => {
       status: updatedTasks.includes(id) ? 1 : 0,
     }));
 
-setSelectedTasks(updatedTasks);
+  setSelectedTasks(updatedTasks);
     setTaskProgressData(updatedProgressData);
     localStorage.setItem('selectedTasks', JSON.stringify(updatedTasks));
     localStorage.setItem('TaskProgressData', JSON.stringify(updatedProgressData));
@@ -252,6 +226,7 @@ setSelectedTasks(updatedTasks);
           })
         });
         
+        
 
         if (!response.ok) {
           throw new Error(`Error posting progress contingency ${contingency.contingencyId}`);
@@ -260,11 +235,34 @@ setSelectedTasks(updatedTasks);
         const data = await response.json();
         return { contingencyId: contingency.contingencyId, progressId: data.body.id };
       }));
+      const progressTasksToPost = taskProgressData.filter(task => task.status === 1);
+      const progressTaskIds = await Promise.all(progressTasksToPost.map(async (task) => {
+        const response = await fetch(`https://webapi-f01g.onrender.com/api/progress_tasks`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            task_id: task.taskId,
+            status: "1",
+            user_id: userId,
+            date: new Date().toISOString().slice(0, 10)
+          })
+        });
+        
 
-      const taskIds = selectedTasks.map(task => task.progressId);
+        if (!response.ok) {
+          throw new Error(`Error posting progress task: ${task.taskId}`);
+        }
+
+        const data = await response.json();
+        return { taskId: task.taskId, progressId: data.body.id };
+      }));
+
       const reportContent = {
         dummyData: "default value",
-        tasks: taskIds.map(id => ({ ID: id, Type: 2, info: "Task information" })),
+        tasks: progressTaskIds.map(c => ({ ID: c.progressId, Type: "2", Name: "Task Progress" })),
         contingencies: progressContingencyIds.map(c => ({ ID: c.progressId, Type: "2", Name: "Contingency Progress" })),
         photos: {
           before: localStorage.getItem('beforePhotoUrl'),
@@ -406,6 +404,6 @@ setSelectedTasks(updatedTasks);
       </div>
     </div>
   );  
-};
+ };
 
 export default CleaningReport;
