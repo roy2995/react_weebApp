@@ -1023,26 +1023,47 @@ const CleaningService = () => {
         );
         
         const progressData = await progressResponse.json();
-        console.log('Progress buckets data:', progressData);
-        
+        console.log('All progress buckets:', progressData.body);
+
         if (!progressData.body || progressData.body.length === 0) {
           throw new Error('No hay registros de asignaciones');
         }
 
-        // Get today's date in YYYY-MM-DD format
+        // Get today's date and log it
         const today = new Date().toISOString().slice(0, 10);
+        console.log('Today\'s date:', today);
+        
+        // Log all unique dates in the assignments
+        const uniqueDates = [...new Set(progressData.body.map(a => a.date))];
+        console.log('Available assignment dates:', uniqueDates);
 
-        // Filter assignments for today and sort by ID to get the latest
-        const todayAssignments = progressData.body
-          .filter(assignment => assignment.date === today)
-          .sort((a, b) => b.id - a.id); // Sort by ID in descending order
-
-        if (todayAssignments.length === 0) {
-          throw new Error('No hay asignaciones para hoy');
+        // First try to get today's assignments
+        let assignments = progressData.body
+          .filter(assignment => assignment.date === today);
+        
+        // If no assignments for today, get the most recent assignment
+        if (assignments.length === 0) {
+          console.log('No assignments found for today, looking for most recent...');
+          const sortedAssignments = progressData.body
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
+          
+          if (sortedAssignments.length > 0) {
+            const mostRecentDate = sortedAssignments[0].date;
+            assignments = progressData.body
+              .filter(assignment => assignment.date === mostRecentDate)
+              .sort((a, b) => b.id - a.id);
+            
+            console.log('Found assignments for most recent date:', mostRecentDate);
+          }
         }
 
-        const latestAssignment = todayAssignments[0];
-        console.log('Latest assignment:', latestAssignment);
+        if (assignments.length === 0) {
+          throw new Error('No se encontraron asignaciones recientes');
+        }
+
+        // Get the latest assignment for the selected date
+        const latestAssignment = assignments[0];
+        console.log('Selected assignment:', latestAssignment);
 
         // Get bucket data for the latest assignment
         const bucketResponse = await fetch(
@@ -1075,12 +1096,14 @@ const CleaningService = () => {
           task => task.Type.toString() === currentArea.Tipo.toString()
         );
         
+        console.log('Filtered tasks for area type:', currentArea.Tipo, filteredTasks);
+        
         setTasks(filteredTasks);
         localStorage.setItem('tasks', JSON.stringify(filteredTasks));
 
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error in fetchUserData:', error);
         setError(error.message);
         setLoading(false);
       }
