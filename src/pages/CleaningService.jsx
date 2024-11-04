@@ -1011,6 +1011,22 @@ const CleaningService = () => {
           return;
         }
 
+        // First, get all buckets to filter Albrook Mall ones
+        const bucketsResponse = await fetch(
+          `${API_BASE_URL}/buckets`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        
+        const bucketsData = await bucketsResponse.json();
+        console.log('All buckets:', bucketsData.body);
+
+        // Filter Albrook Mall buckets and create a map of their IDs
+        const albrookBucketIds = bucketsData.body
+          .filter(bucket => bucket.Terminal === "Albrook Mall")
+          .map(bucket => bucket.ID);
+        
+        console.log('Albrook Mall bucket IDs:', albrookBucketIds);
+
         // Get all progress_buckets for this user
         const progressResponse = await fetch(
           `${API_BASE_URL}/progress_buckets?user_id=${userId}`,
@@ -1029,58 +1045,37 @@ const CleaningService = () => {
           throw new Error('No hay registros de asignaciones');
         }
 
-        // Get today's date and log it
-        const today = new Date().toISOString().slice(0, 10);
-        console.log('Today\'s date:', today);
-        
-        // Log all unique dates in the assignments
-        const uniqueDates = [...new Set(progressData.body.map(a => a.date))];
-        console.log('Available assignment dates:', uniqueDates);
+        // Filter assignments for Albrook Mall buckets only
+        const albrookAssignments = progressData.body
+          .filter(assignment => albrookBucketIds.includes(assignment.bucket_id))
+          .sort((a, b) => {
+            // Sort by date first (most recent)
+            const dateComparison = new Date(b.date) - new Date(a.date);
+            if (dateComparison !== 0) return dateComparison;
+            // If same date, sort by ID (highest first)
+            return b.id - a.id;
+          });
 
-        // First try to get today's assignments
-        let assignments = progressData.body
-          .filter(assignment => assignment.date === today);
-        
-        // If no assignments for today, get the most recent assignment
-        if (assignments.length === 0) {
-          console.log('No assignments found for today, looking for most recent...');
-          const sortedAssignments = progressData.body
-            .sort((a, b) => new Date(b.date) - new Date(a.date));
-          
-          if (sortedAssignments.length > 0) {
-            const mostRecentDate = sortedAssignments[0].date;
-            assignments = progressData.body
-              .filter(assignment => assignment.date === mostRecentDate)
-              .sort((a, b) => b.id - a.id);
-            
-            console.log('Found assignments for most recent date:', mostRecentDate);
-          }
+        console.log('Filtered Albrook assignments:', albrookAssignments);
+
+        if (albrookAssignments.length === 0) {
+          throw new Error('No se encontraron asignaciones para Albrook Mall');
         }
 
-        if (assignments.length === 0) {
-          throw new Error('No se encontraron asignaciones recientes');
-        }
+        // Get the latest assignment
+        const latestAssignment = albrookAssignments[0];
+        console.log('Latest Albrook assignment:', latestAssignment);
 
-        // Get the latest assignment for the selected date
-        const latestAssignment = assignments[0];
-        console.log('Selected assignment:', latestAssignment);
-
-        // Get bucket data for the latest assignment
-        const bucketResponse = await fetch(
-          `${API_BASE_URL}/buckets/${latestAssignment.bucket_id}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        // Get detailed bucket data for the latest assignment
+        const currentBucket = bucketsData.body.find(b => b.ID === latestAssignment.bucket_id);
+        console.log('Current bucket details:', currentBucket);
         
-        const bucketData = await bucketResponse.json();
-        console.log('Bucket data:', bucketData);
-        
-        if (!bucketData.body || bucketData.body.length === 0) {
+        if (!currentBucket) {
           throw new Error('No se encontró información del área asignada');
         }
 
-        const currentArea = bucketData.body[0];
-        setArea(currentArea);
-        localStorage.setItem('area', JSON.stringify(currentArea));
+        setArea(currentBucket);
+        localStorage.setItem('area', JSON.stringify(currentBucket));
 
         // Load tasks for this area type
         const tasksResponse = await fetch(
@@ -1093,10 +1088,10 @@ const CleaningService = () => {
         
         // Filter tasks based on the current area type
         const filteredTasks = tasksData.body.filter(
-          task => task.Type.toString() === currentArea.Tipo.toString()
+          task => task.Type.toString() === currentBucket.Tipo.toString()
         );
         
-        console.log('Filtered tasks for area type:', currentArea.Tipo, filteredTasks);
+        console.log('Filtered tasks for area type:', currentBucket.Tipo, filteredTasks);
         
         setTasks(filteredTasks);
         localStorage.setItem('tasks', JSON.stringify(filteredTasks));
