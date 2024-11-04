@@ -57,74 +57,50 @@ const ReportPage = () => {
     const token = localStorage.getItem('token');
     const content = JSON.parse(report.content);
 
-    console.log("Tipo de reporte:", content.Report_Type); // Verifica el tipo de reporte
+    console.log("Report Content:", content);
 
-    if (content.Report_Type === "Contingency") {
-      console.log("Iniciando búsqueda de contingencias...");
+    try {
+      if (content.Report_Type === "Contingency") {
+        console.log("Processing Contingency Report");
+        // Handle contingency reports as before
+        const contingencyPromises = (content.contingencies || []).map(async (contingency) => {
+          const contingencyData = await fetchDataById(`contingencies/${contingency.id}`, token);
+          return {
+            ID: contingencyData.ID || contingency.id,
+            Name: contingencyData.Name || 'Nombre no disponible',
+            Type: contingencyData.Type || 'Tipo no disponible',
+          };
+        });
 
-      // Realizamos solicitudes a la API para obtener el nombre de cada contingencia
-      const contingencyPromises = content.contingencies.map(async (contingency) => {
-        const contingencyData = await fetchDataById(`contingencies/${contingency.ID}`, token);
-        console.log("Datos de contingencia obtenidos:", contingencyData);
+        const contingenciesData = await Promise.all(contingencyPromises);
         
-        return {
-          ID: contingencyData.ID,
-          Name: contingencyData.Name || 'Nombre no disponible',
-          Type: contingencyData.Type || 'Tipo no disponible',
+        const details = { 
+          report, 
+          contingencies: contingenciesData,
+          bucket: null,
+          tasks: []
         };
-      });
-
-      const contingenciesData = await Promise.all(contingencyPromises);
-      console.log("Datos de todas las contingencias:", contingenciesData);
-
-      const details = { report, contingencies: contingenciesData };
-      setDataIndex((prevState) => ({
-        ...prevState,
-        [report.id]: details,
-      }));
-      setSelectedReport(details);
-
-    } else {
-      console.log("Iniciando búsqueda para el reporte estándar...");
-
-      const bucketData = await fetchDataById(`buckets/${report.bucket_id}`, token);
-      console.log("Datos del bucket obtenidos:", bucketData);
-
-      const progressTaskIDs = content.tasks.map((task) => task.ID);
-      console.log("IDs de tareas de progreso:", progressTaskIDs);
-
-      const taskPromises = progressTaskIDs.map(async (progressTaskId) => {
-        console.log(`Buscando detalles para la tarea de progreso ID: ${progressTaskId}`);
         
-        const progressTask = await fetchDataById(`progress_tasks/${progressTaskId}`, token);
-        console.log("Datos de tarea de progreso obtenidos:", progressTask);
+        setDataIndex(prev => ({ ...prev, [report.id]: details }));
+        setSelectedReport(details);
+
+      } else {
+        console.log("Processing Standard Report");
         
-        const taskId = progressTask[0]?.task_id;
-        if (taskId) {
-          const task = await fetchDataById(`tasks/${taskId}`, token);
-          console.log("Datos de tarea obtenidos:", task);
-          
-          return { info: task[0]?.info || 'Información no disponible', status: progressTask[0]?.status || 'Pendiente' };
-        } else {
-          return { info: 'Información no disponible', status: 'Pendiente' };
-        }
+        const details = {
+          report,
+          content: content
+        };
+
+        setDataIndex(prev => ({ ...prev, [report.id]: details }));
+        setSelectedReport(details);
+      }
+    } catch (error) {
+      console.error("Error in fetchDetailsById:", error);
+      setSelectedReport({
+        report,
+        content: {}
       });
-
-      const tasksData = await Promise.all(taskPromises);
-      console.log("Datos de todas las tareas:", tasksData);
-
-      const details = {
-        report: report,
-        bucket: bucketData[0] || {},
-        tasks: tasksData,
-        contingencies: [],
-      };
-
-      setDataIndex((prevState) => ({
-        ...prevState,
-        [report.id]: details,
-      }));
-      setSelectedReport(details);
     }
   };
 
@@ -154,39 +130,114 @@ const ReportPage = () => {
   const exportToPdf = async () => {
     if (!selectedReport) return;
 
-    const { report, bucket, tasks, contingencies } = selectedReport;
-    const content = JSON.parse(report.content);
+    const { report } = selectedReport;
+    const content = typeof selectedReport.content === 'string' 
+      ? JSON.parse(selectedReport.content) 
+      : selectedReport.content;
+
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 20;
+    const contentWidth = pageWidth - (margin * 2);
+
+    // Helper function for wrapping text
+    const addWrappedText = (text, x, y) => {
+      const lines = doc.splitTextToSize(text, contentWidth);
+      doc.text(lines, x, y);
+      return y + (lines.length * 7); // Return the new Y position
+    };
 
     doc.setFontSize(18);
-    doc.text('Reporte de Actividades', 20, 20);
+    doc.text('Reporte de Actividades', margin, margin);
     doc.setFontSize(12);
+    let yPos = margin + 15;
 
     if (content.Report_Type === "Contingency") {
-      // Formato para el reporte de contingencias
-      doc.text('Reporte de Contingencias', 20, 30);
-      doc.text(`Fecha: ${new Date(report.created_at).toLocaleDateString()}`, 20, 40);
-      doc.text('Contingencias Reportadas:', 20, 50);
-      contingencies.forEach((contingency, index) => {
-        doc.text(`- ${contingency.Name} - Tipo: ${contingency.Type}`, 20, 60 + index * 10);
-      });
+      yPos = addWrappedText('Reporte de Contingencias', margin, yPos);
+      yPos += 10;
+      yPos = addWrappedText(`Fecha: ${new Date(report.created_at).toLocaleDateString()}`, margin, yPos);
+      yPos += 10;
+      yPos = addWrappedText('Contingencias Reportadas:', margin, yPos);
+      yPos += 5;
+      
+      if (selectedReport.contingencies) {
+        for (const contingency of selectedReport.contingencies) {
+          yPos = addWrappedText(`- ${contingency.Name} - Tipo: ${contingency.Type}`, margin, yPos);
+          yPos += 5;
+        }
+      }
     } else {
-      // Formato para el reporte normal
-      doc.text('Este es un reporte generado automáticamente de las actividades realizadas.', 20, 30);
-      doc.text(`Fecha: ${new Date(report.created_at).toLocaleDateString()}`, 20, 40);
-      doc.text(`Área: ${bucket?.Area || 'Desconocida'}`, 20, 50);
-      doc.text(`Terminal: ${bucket?.Terminal || 'Desconocida'}`, 20, 60);
-      doc.text(`Nivel: ${bucket?.Nivel || 'Desconocido'}`, 20, 70);
+      yPos = addWrappedText('Este es un reporte generado automáticamente de las actividades realizadas.', margin, yPos);
+      yPos += 10;
+      
+      yPos = addWrappedText(`Fecha: ${new Date(report.created_at).toLocaleDateString()}`, margin, yPos);
+      yPos += 10;
 
-      doc.text('Tareas Realizadas:', 20, 80);
-      tasks.forEach((task, index) => {
-        doc.text(`- ${task.info} - Estado: ${task.status ? 'Completada' : 'Pendiente'}`, 20, 90 + index * 10);
-      });
+      if (content.area) {
+        yPos = addWrappedText(`Área: ${content.area?.name || 'No especificada'}`, margin, yPos);
+        yPos += 7;
+        yPos = addWrappedText(`Terminal: ${content.area?.terminal || 'No especificada'}`, margin, yPos);
+        yPos += 7;
+        yPos = addWrappedText(`Nivel: ${content.area?.nivel || 'No especificado'}`, margin, yPos);
+        yPos += 10;
+      }
 
-      doc.text('Contingencias Encontradas:', 20, 100 + tasks.length * 10);
-      contingencies.forEach((cont, index) => {
-        doc.text(`- ${cont.Name} - Estado: ${cont.status === '1' ? 'Resuelta' : 'Pendiente'}`, 20, 110 + tasks.length * 10 + index * 10);
-      });
+      // Tasks section
+      if (content.tasks && content.tasks.length > 0) {
+        yPos = addWrappedText('Tareas Realizadas:', margin, yPos);
+        yPos += 7;
+        for (const task of content.tasks) {
+          const taskText = `- ${task.info} - Estado: ${task.status === "1" ? 'Completada' : 'Pendiente'}`;
+          yPos = addWrappedText(taskText, margin, yPos);
+          yPos += 7;
+        }
+        yPos += 5;
+      }
+
+      // Contingencies section
+      if (content.contingencies && content.contingencies.length > 0) {
+        yPos = addWrappedText('Contingencias Encontradas:', margin, yPos);
+        yPos += 7;
+        for (const cont of content.contingencies) {
+          const contText = `- ${cont.Name || 'Sin nombre'} - Estado: ${cont.status === "1" ? 'Resuelta' : 'Pendiente'}`;
+          yPos = addWrappedText(contText, margin, yPos);
+          yPos += 7;
+        }
+      }
+
+      // Photos section
+      if (content.photos) {
+        yPos += 10;
+        yPos = addWrappedText('Fotos del Reporte:', margin, yPos);
+        yPos += 10;
+
+        try {
+          // Add photos if they exist
+          const photoTypes = ['before', 'during', 'after'];
+          for (const type of photoTypes) {
+            if (content.photos[type]) {
+              // Add a new page if we're running out of space
+              if (yPos > doc.internal.pageSize.getHeight() - 60) {
+                doc.addPage();
+                yPos = margin;
+              }
+
+              const imgData = await getBase64ImageFromURL(content.photos[type]);
+              const imgProps = doc.getImageProperties(imgData);
+              const imgWidth = 170; // Fixed width
+              const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+              
+              doc.text(`Foto ${type}:`, margin, yPos);
+              yPos += 7;
+              doc.addImage(imgData, 'JPEG', margin, yPos, imgWidth, imgHeight);
+              yPos += imgHeight + 10;
+            }
+          }
+        } catch (error) {
+          console.error('Error adding images to PDF:', error);
+          yPos = addWrappedText('Error al cargar las imágenes', margin, yPos);
+        }
+      }
     }
 
     doc.save(`reporte_${report.id}.pdf`);
@@ -194,12 +245,21 @@ const ReportPage = () => {
 
   const renderPreview = () => {
     if (!selectedReport) return null;
-    const { report, bucket, tasks, contingencies } = selectedReport;
-    const content = JSON.parse(report.content);
+    
+    const { report } = selectedReport;
+    // Parse the content here since it's stored as a string
+    const content = JSON.parse(selectedReport.content);
+    
+    console.log("Selected Report:", selectedReport);
+    console.log("Parsed Content:", content);
 
     return (
       <div key={`${report.id}-${previewKey}`} className="mb-6 p-4 bg-white rounded-lg shadow text-gray-700">
-        <p><strong>Reporte del {new Date(report.created_at).toLocaleDateString()}</strong> {content.Report_Type === "Contingency" ? "de Contingencias" : `en el área ${bucket?.Area || 'Desconocida'} de la ${bucket?.Terminal || 'Desconocida'} nivel ${bucket?.Nivel || 'Desconocido'}`}</p>
+        <p><strong>Reporte del {new Date(report.created_at).toLocaleDateString()}</strong> 
+          {content.Report_Type === "Contingency" ? 
+            " de Contingencias" : 
+            ` en el área ${content.area.name} de la ${content.area.terminal} nivel ${content.area.nivel}`}
+        </p>
 
         {content.Report_Type === "Contingency" ? (
           <>
@@ -214,19 +274,41 @@ const ReportPage = () => {
           <>
             <p><strong>Tareas Realizadas:</strong></p>
             <ul className="list-disc ml-4">
-              {tasks.length > 0 ? tasks.map((task, i) => (
-                <li key={i}>{task.info || 'Información no disponible'} {task.status ? '✓' : '✘'}</li>
+              {content.tasks && content.tasks.length > 0 ? content.tasks.map((task, i) => (
+                <li key={i}>
+                  {task.info} {task.status === "1" ? '✓' : '✘'}
+                </li>
               )) : <li>No se encontraron tareas.</li>}
             </ul>
 
             <p><strong>Contingencias Encontradas:</strong></p>
             <ul className="list-disc ml-4">
-              {contingencies.length > 0 ? contingencies.map((cont, i) => (
-                <li key={i}>{cont.Name || 'Nombre no disponible'} {cont.status === '1' ? '✓' : '✘'}</li>
+              {content.contingencies && content.contingencies.length > 0 ? content.contingencies.map((cont, i) => (
+                <li key={i}>{cont.Name || 'Nombre no disponible'} {cont.status === "1" ? '✓' : '✘'}</li>
               )) : (
                 <li>No se encontraron contingencias.</li>
               )}
             </ul>
+
+            {content.photos && Object.keys(content.photos).length > 0 && (
+              <div className="mt-4">
+                <p><strong>Fotos del Reporte:</strong></p>
+                <div className="grid grid-cols-3 gap-4 mt-2">
+                  {Object.entries(content.photos).map(([key, url]) => (
+                    url && (
+                      <div key={key}>
+                        <p className="text-sm font-semibold mb-1">{key.charAt(0).toUpperCase() + key.slice(1)}:</p>
+                        <img 
+                          src={url} 
+                          alt={`Foto ${key}`} 
+                          className="w-full h-40 object-cover rounded-lg shadow"
+                        />
+                      </div>
+                    )
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
 
