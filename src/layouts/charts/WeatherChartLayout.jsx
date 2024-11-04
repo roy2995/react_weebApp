@@ -8,12 +8,9 @@ const WeatherChartLayout = ({ filter }) => {
   const [error, setError] = useState(null);
 
   const typeMapping = {
-    1: 'Baños',
-    2: 'Oficinas',
-    3: 'Exteriores',
-    4: 'Food Courts',
-    5: 'Estacionamientos',
-    6: 'Sin Resolver'
+    7: 'Baños',
+    8: 'Food Court',
+    9: 'Pasillos'
   };
 
   const fetchTaskData = async () => {
@@ -46,8 +43,8 @@ const WeatherChartLayout = ({ filter }) => {
       }
 
       const bucketMap = bucketData.body.reduce((map, bucket) => {
-        if (bucket.Tipo !== '7') {
-          map[bucket.ID] = typeMapping[bucket.Tipo] || 'Otro';
+        if ([7, 8, 9].includes(bucket.Tipo)) {  // Cambiado para los nuevos tipos
+          map[bucket.ID] = typeMapping[bucket.Tipo];
         }
         return map;
       }, {});
