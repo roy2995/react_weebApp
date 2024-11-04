@@ -1011,7 +1011,7 @@ const CleaningService = () => {
           return;
         }
 
-        // First, get all progress_buckets for this user
+        // Get all progress_buckets for this user
         const progressResponse = await fetch(
           `${API_BASE_URL}/progress_buckets?user_id=${userId}`,
           { 
@@ -1029,12 +1029,19 @@ const CleaningService = () => {
           throw new Error('No hay registros de asignaciones');
         }
 
-        // Sort progress_buckets by date to get the latest assignment
-        const sortedProgress = progressData.body.sort((a, b) => 
-          new Date(b.date) - new Date(a.date)
-        );
-        
-        const latestAssignment = sortedProgress[0];
+        // Get today's date in YYYY-MM-DD format
+        const today = new Date().toISOString().slice(0, 10);
+
+        // Filter assignments for today and sort by ID to get the latest
+        const todayAssignments = progressData.body
+          .filter(assignment => assignment.date === today)
+          .sort((a, b) => b.id - a.id); // Sort by ID in descending order
+
+        if (todayAssignments.length === 0) {
+          throw new Error('No hay asignaciones para hoy');
+        }
+
+        const latestAssignment = todayAssignments[0];
         console.log('Latest assignment:', latestAssignment);
 
         // Get bucket data for the latest assignment
