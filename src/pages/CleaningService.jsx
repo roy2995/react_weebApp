@@ -1011,7 +1011,7 @@ const CleaningService = () => {
           return;
         }
 
-        // First, get all buckets to filter Albrook Mall ones
+        // First get all buckets
         const bucketsResponse = await fetch(
           `${API_BASE_URL}/buckets`,
           { headers: { Authorization: `Bearer ${token}` } }
@@ -1019,13 +1019,6 @@ const CleaningService = () => {
         
         const bucketsData = await bucketsResponse.json();
         console.log('All buckets:', bucketsData.body);
-
-        // Filter Albrook Mall buckets and create a map of their IDs
-        const albrookBucketIds = bucketsData.body
-          .filter(bucket => bucket.Terminal === "Albrook Mall")
-          .map(bucket => bucket.ID);
-        
-        console.log('Albrook Mall bucket IDs:', albrookBucketIds);
 
         // Get all progress_buckets for this user
         const progressResponse = await fetch(
@@ -1045,31 +1038,28 @@ const CleaningService = () => {
           throw new Error('No hay registros de asignaciones');
         }
 
-        // Filter assignments for Albrook Mall buckets only
-        const albrookAssignments = progressData.body
-          .filter(assignment => albrookBucketIds.includes(assignment.bucket_id))
-          .sort((a, b) => {
-            // Sort by date first (most recent)
-            const dateComparison = new Date(b.date) - new Date(a.date);
-            if (dateComparison !== 0) return dateComparison;
-            // If same date, sort by ID (highest first)
-            return b.id - a.id;
-          });
+        // Get today's date in YYYY-MM-DD format
+        const today = new Date().toISOString().slice(0, 10);
+        console.log('Today:', today);
 
-        console.log('Filtered Albrook assignments:', albrookAssignments);
+        // Filter assignments for today and sort by ID to get the latest
+        const todayAssignments = progressData.body
+          .filter(assignment => assignment.date === today)
+          .sort((a, b) => b.id - a.id);
 
-        if (albrookAssignments.length === 0) {
-          throw new Error('No se encontraron asignaciones para Albrook Mall');
+        console.log('Today assignments:', todayAssignments);
+
+        if (todayAssignments.length === 0) {
+          throw new Error('No hay asignaciones para hoy');
         }
 
-        // Get the latest assignment
-        const latestAssignment = albrookAssignments[0];
-        console.log('Latest Albrook assignment:', latestAssignment);
+        const latestAssignment = todayAssignments[0];
+        console.log('Latest assignment:', latestAssignment);
 
-        // Get detailed bucket data for the latest assignment
+        // Get bucket data for the latest assignment
         const currentBucket = bucketsData.body.find(b => b.ID === latestAssignment.bucket_id);
-        console.log('Current bucket details:', currentBucket);
-        
+        console.log('Current bucket:', currentBucket);
+
         if (!currentBucket) {
           throw new Error('No se encontró información del área asignada');
         }
@@ -1077,21 +1067,22 @@ const CleaningService = () => {
         setArea(currentBucket);
         localStorage.setItem('area', JSON.stringify(currentBucket));
 
-        // Load tasks for this area type
+        // Load and filter tasks based on the area type
         const tasksResponse = await fetch(
           `${API_BASE_URL}/tasks`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         
         const tasksData = await tasksResponse.json();
-        console.log('Tasks data:', tasksData);
+        console.log('All tasks:', tasksData.body);
         
-        // Filter tasks based on the current area type
-        const filteredTasks = tasksData.body.filter(
-          task => task.Type.toString() === currentBucket.Tipo.toString()
-        );
+        // Filter tasks matching the current bucket type
+        const filteredTasks = tasksData.body.filter(task => {
+          console.log('Comparing task type:', task.Type, 'with bucket type:', currentBucket.Tipo);
+          return task.Type === currentBucket.Tipo;
+        });
         
-        console.log('Filtered tasks for area type:', currentBucket.Tipo, filteredTasks);
+        console.log('Filtered tasks:', filteredTasks);
         
         setTasks(filteredTasks);
         localStorage.setItem('tasks', JSON.stringify(filteredTasks));
