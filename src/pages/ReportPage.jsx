@@ -57,7 +57,7 @@ const ReportPage = () => {
     const token = localStorage.getItem('token');
     const content = JSON.parse(report.content);
 
-    console.log("Report Content:", content); // Debug log
+    console.log("Report Content:", content);
 
     try {
       if (content.Report_Type === "Contingency") {
@@ -86,22 +86,10 @@ const ReportPage = () => {
 
       } else {
         console.log("Processing Standard Report");
-        // Handle standard reports
-        const bucketData = await fetchDataById(`buckets/${report.bucket_id}`, token);
         
-        // Ensure tasks array exists and has the correct structure
-        const tasks = (content.tasks || []).map(task => ({
-          id: task.id,
-          info: task.info,
-          status: task.status
-        }));
-
         const details = {
           report,
-          bucket: bucketData[0] || {},
-          tasks: tasks,
-          contingencies: content.contingencies || [],
-          photos: content.photos || {} // Add photos to the details
+          content: content
         };
 
         setDataIndex(prev => ({ ...prev, [report.id]: details }));
@@ -109,13 +97,9 @@ const ReportPage = () => {
       }
     } catch (error) {
       console.error("Error in fetchDetailsById:", error);
-      // Set a minimal valid state to prevent crashes
       setSelectedReport({
         report,
-        bucket: {},
-        tasks: [],
-        contingencies: [],
-        photos: {}
+        content: {}
       });
     }
   };
@@ -187,15 +171,19 @@ const ReportPage = () => {
   const renderPreview = () => {
     if (!selectedReport) return null;
     
-    const { report, bucket, tasks, contingencies } = selectedReport;
-    const content = JSON.parse(report.content);
+    const { report } = selectedReport;
+    // Parse the content here since it's stored as a string
+    const content = JSON.parse(selectedReport.content);
+    
+    console.log("Selected Report:", selectedReport);
+    console.log("Parsed Content:", content);
 
     return (
       <div key={`${report.id}-${previewKey}`} className="mb-6 p-4 bg-white rounded-lg shadow text-gray-700">
         <p><strong>Reporte del {new Date(report.created_at).toLocaleDateString()}</strong> 
           {content.Report_Type === "Contingency" ? 
             " de Contingencias" : 
-            ` en el área ${bucket?.Area || 'Desconocida'} de la ${bucket?.Terminal || 'Desconocida'} nivel ${bucket?.Nivel || 'Desconocido'}`}
+            ` en el área ${content.area.name} de la ${content.area.terminal} nivel ${content.area.nivel}`}
         </p>
 
         {content.Report_Type === "Contingency" ? (
@@ -211,55 +199,38 @@ const ReportPage = () => {
           <>
             <p><strong>Tareas Realizadas:</strong></p>
             <ul className="list-disc ml-4">
-              {tasks && tasks.length > 0 ? tasks.map((task, i) => (
-                <li key={i}>{task.info || 'Información no disponible'} {task.status === "1" ? '✓' : '✘'}</li>
+              {content.tasks && content.tasks.length > 0 ? content.tasks.map((task, i) => (
+                <li key={i}>
+                  {task.info} {task.status === "1" ? '✓' : '✘'}
+                </li>
               )) : <li>No se encontraron tareas.</li>}
             </ul>
 
             <p><strong>Contingencias Encontradas:</strong></p>
             <ul className="list-disc ml-4">
-              {contingencies && contingencies.length > 0 ? contingencies.map((cont, i) => (
-                <li key={i}>{cont.name || 'Nombre no disponible'} {cont.status === "1" ? '✓' : '✘'}</li>
+              {content.contingencies && content.contingencies.length > 0 ? content.contingencies.map((cont, i) => (
+                <li key={i}>{cont.Name || 'Nombre no disponible'} {cont.status === "1" ? '✓' : '✘'}</li>
               )) : (
                 <li>No se encontraron contingencias.</li>
               )}
             </ul>
 
-            {/* Add Photos Section */}
-            {content.photos && (
+            {content.photos && Object.keys(content.photos).length > 0 && (
               <div className="mt-4">
                 <p><strong>Fotos del Reporte:</strong></p>
                 <div className="grid grid-cols-3 gap-4 mt-2">
-                  {content.photos.before && (
-                    <div>
-                      <p className="text-sm font-semibold mb-1">Antes:</p>
-                      <img 
-                        src={content.photos.before} 
-                        alt="Foto Antes" 
-                        className="w-full h-40 object-cover rounded-lg shadow"
-                      />
-                    </div>
-                  )}
-                  {content.photos.during && (
-                    <div>
-                      <p className="text-sm font-semibold mb-1">Durante:</p>
-                      <img 
-                        src={content.photos.during} 
-                        alt="Foto Durante" 
-                        className="w-full h-40 object-cover rounded-lg shadow"
-                      />
-                    </div>
-                  )}
-                  {content.photos.after && (
-                    <div>
-                      <p className="text-sm font-semibold mb-1">Después:</p>
-                      <img 
-                        src={content.photos.after} 
-                        alt="Foto Después" 
-                        className="w-full h-40 object-cover rounded-lg shadow"
-                      />
-                    </div>
-                  )}
+                  {Object.entries(content.photos).map(([key, url]) => (
+                    url && (
+                      <div key={key}>
+                        <p className="text-sm font-semibold mb-1">{key.charAt(0).toUpperCase() + key.slice(1)}:</p>
+                        <img 
+                          src={url} 
+                          alt={`Foto ${key}`} 
+                          className="w-full h-40 object-cover rounded-lg shadow"
+                        />
+                      </div>
+                    )
+                  ))}
                 </div>
               </div>
             )}
