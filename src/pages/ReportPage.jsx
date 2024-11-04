@@ -130,39 +130,114 @@ const ReportPage = () => {
   const exportToPdf = async () => {
     if (!selectedReport) return;
 
-    const { report, bucket, tasks, contingencies } = selectedReport;
-    const content = JSON.parse(report.content);
+    const { report } = selectedReport;
+    const content = typeof selectedReport.content === 'string' 
+      ? JSON.parse(selectedReport.content) 
+      : selectedReport.content;
+
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 20;
+    const contentWidth = pageWidth - (margin * 2);
+
+    // Helper function for wrapping text
+    const addWrappedText = (text, x, y) => {
+      const lines = doc.splitTextToSize(text, contentWidth);
+      doc.text(lines, x, y);
+      return y + (lines.length * 7); // Return the new Y position
+    };
 
     doc.setFontSize(18);
-    doc.text('Reporte de Actividades', 20, 20);
+    doc.text('Reporte de Actividades', margin, margin);
     doc.setFontSize(12);
+    let yPos = margin + 15;
 
     if (content.Report_Type === "Contingency") {
-      // Formato para el reporte de contingencias
-      doc.text('Reporte de Contingencias', 20, 30);
-      doc.text(`Fecha: ${new Date(report.created_at).toLocaleDateString()}`, 20, 40);
-      doc.text('Contingencias Reportadas:', 20, 50);
-      contingencies.forEach((contingency, index) => {
-        doc.text(`- ${contingency.Name} - Tipo: ${contingency.Type}`, 20, 60 + index * 10);
-      });
+      yPos = addWrappedText('Reporte de Contingencias', margin, yPos);
+      yPos += 10;
+      yPos = addWrappedText(`Fecha: ${new Date(report.created_at).toLocaleDateString()}`, margin, yPos);
+      yPos += 10;
+      yPos = addWrappedText('Contingencias Reportadas:', margin, yPos);
+      yPos += 5;
+      
+      if (selectedReport.contingencies) {
+        for (const contingency of selectedReport.contingencies) {
+          yPos = addWrappedText(`- ${contingency.Name} - Tipo: ${contingency.Type}`, margin, yPos);
+          yPos += 5;
+        }
+      }
     } else {
-      // Formato para el reporte normal
-      doc.text('Este es un reporte generado automáticamente de las actividades realizadas.', 20, 30);
-      doc.text(`Fecha: ${new Date(report.created_at).toLocaleDateString()}`, 20, 40);
-      doc.text(`Área: ${bucket?.Area || 'Desconocida'}`, 20, 50);
-      doc.text(`Terminal: ${bucket?.Terminal || 'Desconocida'}`, 20, 60);
-      doc.text(`Nivel: ${bucket?.Nivel || 'Desconocido'}`, 20, 70);
+      yPos = addWrappedText('Este es un reporte generado automáticamente de las actividades realizadas.', margin, yPos);
+      yPos += 10;
+      
+      yPos = addWrappedText(`Fecha: ${new Date(report.created_at).toLocaleDateString()}`, margin, yPos);
+      yPos += 10;
 
-      doc.text('Tareas Realizadas:', 20, 80);
-      tasks.forEach((task, index) => {
-        doc.text(`- ${task.info} - Estado: ${task.status ? 'Completada' : 'Pendiente'}`, 20, 90 + index * 10);
-      });
+      if (content.area) {
+        yPos = addWrappedText(`Área: ${content.area?.name || 'No especificada'}`, margin, yPos);
+        yPos += 7;
+        yPos = addWrappedText(`Terminal: ${content.area?.terminal || 'No especificada'}`, margin, yPos);
+        yPos += 7;
+        yPos = addWrappedText(`Nivel: ${content.area?.nivel || 'No especificado'}`, margin, yPos);
+        yPos += 10;
+      }
 
-      doc.text('Contingencias Encontradas:', 20, 100 + tasks.length * 10);
-      contingencies.forEach((cont, index) => {
-        doc.text(`- ${cont.Name} - Estado: ${cont.status === '1' ? 'Resuelta' : 'Pendiente'}`, 20, 110 + tasks.length * 10 + index * 10);
-      });
+      // Tasks section
+      if (content.tasks && content.tasks.length > 0) {
+        yPos = addWrappedText('Tareas Realizadas:', margin, yPos);
+        yPos += 7;
+        for (const task of content.tasks) {
+          const taskText = `- ${task.info} - Estado: ${task.status === "1" ? 'Completada' : 'Pendiente'}`;
+          yPos = addWrappedText(taskText, margin, yPos);
+          yPos += 7;
+        }
+        yPos += 5;
+      }
+
+      // Contingencies section
+      if (content.contingencies && content.contingencies.length > 0) {
+        yPos = addWrappedText('Contingencias Encontradas:', margin, yPos);
+        yPos += 7;
+        for (const cont of content.contingencies) {
+          const contText = `- ${cont.Name || 'Sin nombre'} - Estado: ${cont.status === "1" ? 'Resuelta' : 'Pendiente'}`;
+          yPos = addWrappedText(contText, margin, yPos);
+          yPos += 7;
+        }
+      }
+
+      // Photos section
+      if (content.photos) {
+        yPos += 10;
+        yPos = addWrappedText('Fotos del Reporte:', margin, yPos);
+        yPos += 10;
+
+        try {
+          // Add photos if they exist
+          const photoTypes = ['before', 'during', 'after'];
+          for (const type of photoTypes) {
+            if (content.photos[type]) {
+              // Add a new page if we're running out of space
+              if (yPos > doc.internal.pageSize.getHeight() - 60) {
+                doc.addPage();
+                yPos = margin;
+              }
+
+              const imgData = await getBase64ImageFromURL(content.photos[type]);
+              const imgProps = doc.getImageProperties(imgData);
+              const imgWidth = 170; // Fixed width
+              const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+              
+              doc.text(`Foto ${type}:`, margin, yPos);
+              yPos += 7;
+              doc.addImage(imgData, 'JPEG', margin, yPos, imgWidth, imgHeight);
+              yPos += imgHeight + 10;
+            }
+          }
+        } catch (error) {
+          console.error('Error adding images to PDF:', error);
+          yPos = addWrappedText('Error al cargar las imágenes', margin, yPos);
+        }
+      }
     }
 
     doc.save(`reporte_${report.id}.pdf`);
