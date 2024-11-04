@@ -57,74 +57,66 @@ const ReportPage = () => {
     const token = localStorage.getItem('token');
     const content = JSON.parse(report.content);
 
-    console.log("Tipo de reporte:", content.Report_Type); // Verifica el tipo de reporte
+    console.log("Report Content:", content); // Debug log
 
-    if (content.Report_Type === "Contingency") {
-      console.log("Iniciando búsqueda de contingencias...");
+    try {
+      if (content.Report_Type === "Contingency") {
+        console.log("Processing Contingency Report");
+        // Handle contingency reports as before
+        const contingencyPromises = (content.contingencies || []).map(async (contingency) => {
+          const contingencyData = await fetchDataById(`contingencies/${contingency.id}`, token);
+          return {
+            ID: contingencyData.ID || contingency.id,
+            Name: contingencyData.Name || 'Nombre no disponible',
+            Type: contingencyData.Type || 'Tipo no disponible',
+          };
+        });
 
-      // Realizamos solicitudes a la API para obtener el nombre de cada contingencia
-      const contingencyPromises = content.contingencies.map(async (contingency) => {
-        const contingencyData = await fetchDataById(`contingencies/${contingency.ID}`, token);
-        console.log("Datos de contingencia obtenidos:", contingencyData);
+        const contingenciesData = await Promise.all(contingencyPromises);
         
-        return {
-          ID: contingencyData.ID,
-          Name: contingencyData.Name || 'Nombre no disponible',
-          Type: contingencyData.Type || 'Tipo no disponible',
+        const details = { 
+          report, 
+          contingencies: contingenciesData,
+          bucket: null,
+          tasks: []
         };
-      });
-
-      const contingenciesData = await Promise.all(contingencyPromises);
-      console.log("Datos de todas las contingencias:", contingenciesData);
-
-      const details = { report, contingencies: contingenciesData };
-      setDataIndex((prevState) => ({
-        ...prevState,
-        [report.id]: details,
-      }));
-      setSelectedReport(details);
-
-    } else {
-      console.log("Iniciando búsqueda para el reporte estándar...");
-
-      const bucketData = await fetchDataById(`buckets/${report.bucket_id}`, token);
-      console.log("Datos del bucket obtenidos:", bucketData);
-
-      const progressTaskIDs = content.tasks.map((task) => task.ID);
-      console.log("IDs de tareas de progreso:", progressTaskIDs);
-
-      const taskPromises = progressTaskIDs.map(async (progressTaskId) => {
-        console.log(`Buscando detalles para la tarea de progreso ID: ${progressTaskId}`);
         
-        const progressTask = await fetchDataById(`progress_tasks/${progressTaskId}`, token);
-        console.log("Datos de tarea de progreso obtenidos:", progressTask);
+        setDataIndex(prev => ({ ...prev, [report.id]: details }));
+        setSelectedReport(details);
+
+      } else {
+        console.log("Processing Standard Report");
+        // Handle standard reports
+        const bucketData = await fetchDataById(`buckets/${report.bucket_id}`, token);
         
-        const taskId = progressTask[0]?.task_id;
-        if (taskId) {
-          const task = await fetchDataById(`tasks/${taskId}`, token);
-          console.log("Datos de tarea obtenidos:", task);
-          
-          return { info: task[0]?.info || 'Información no disponible', status: progressTask[0]?.status || 'Pendiente' };
-        } else {
-          return { info: 'Información no disponible', status: 'Pendiente' };
-        }
-      });
+        // Ensure tasks array exists and has the correct structure
+        const tasks = (content.tasks || []).map(task => ({
+          id: task.id,
+          info: task.info,
+          status: task.status
+        }));
 
-      const tasksData = await Promise.all(taskPromises);
-      console.log("Datos de todas las tareas:", tasksData);
+        const details = {
+          report,
+          bucket: bucketData[0] || {},
+          tasks: tasks,
+          contingencies: content.contingencies || [],
+          photos: content.photos || {} // Add photos to the details
+        };
 
-      const details = {
-        report: report,
-        bucket: bucketData[0] || {},
-        tasks: tasksData,
+        setDataIndex(prev => ({ ...prev, [report.id]: details }));
+        setSelectedReport(details);
+      }
+    } catch (error) {
+      console.error("Error in fetchDetailsById:", error);
+      // Set a minimal valid state to prevent crashes
+      setSelectedReport({
+        report,
+        bucket: {},
+        tasks: [],
         contingencies: [],
-      };
-
-      setDataIndex((prevState) => ({
-        ...prevState,
-        [report.id]: details,
-      }));
-      setSelectedReport(details);
+        photos: {}
+      });
     }
   };
 
@@ -194,12 +186,17 @@ const ReportPage = () => {
 
   const renderPreview = () => {
     if (!selectedReport) return null;
+    
     const { report, bucket, tasks, contingencies } = selectedReport;
     const content = JSON.parse(report.content);
 
     return (
       <div key={`${report.id}-${previewKey}`} className="mb-6 p-4 bg-white rounded-lg shadow text-gray-700">
-        <p><strong>Reporte del {new Date(report.created_at).toLocaleDateString()}</strong> {content.Report_Type === "Contingency" ? "de Contingencias" : `en el área ${bucket?.Area || 'Desconocida'} de la ${bucket?.Terminal || 'Desconocida'} nivel ${bucket?.Nivel || 'Desconocido'}`}</p>
+        <p><strong>Reporte del {new Date(report.created_at).toLocaleDateString()}</strong> 
+          {content.Report_Type === "Contingency" ? 
+            " de Contingencias" : 
+            ` en el área ${bucket?.Area || 'Desconocida'} de la ${bucket?.Terminal || 'Desconocida'} nivel ${bucket?.Nivel || 'Desconocido'}`}
+        </p>
 
         {content.Report_Type === "Contingency" ? (
           <>
@@ -214,19 +211,58 @@ const ReportPage = () => {
           <>
             <p><strong>Tareas Realizadas:</strong></p>
             <ul className="list-disc ml-4">
-              {tasks.length > 0 ? tasks.map((task, i) => (
-                <li key={i}>{task.info || 'Información no disponible'} {task.status ? '✓' : '✘'}</li>
+              {tasks && tasks.length > 0 ? tasks.map((task, i) => (
+                <li key={i}>{task.info || 'Información no disponible'} {task.status === "1" ? '✓' : '✘'}</li>
               )) : <li>No se encontraron tareas.</li>}
             </ul>
 
             <p><strong>Contingencias Encontradas:</strong></p>
             <ul className="list-disc ml-4">
-              {contingencies.length > 0 ? contingencies.map((cont, i) => (
-                <li key={i}>{cont.Name || 'Nombre no disponible'} {cont.status === '1' ? '✓' : '✘'}</li>
+              {contingencies && contingencies.length > 0 ? contingencies.map((cont, i) => (
+                <li key={i}>{cont.name || 'Nombre no disponible'} {cont.status === "1" ? '✓' : '✘'}</li>
               )) : (
                 <li>No se encontraron contingencias.</li>
               )}
             </ul>
+
+            {/* Add Photos Section */}
+            {content.photos && (
+              <div className="mt-4">
+                <p><strong>Fotos del Reporte:</strong></p>
+                <div className="grid grid-cols-3 gap-4 mt-2">
+                  {content.photos.before && (
+                    <div>
+                      <p className="text-sm font-semibold mb-1">Antes:</p>
+                      <img 
+                        src={content.photos.before} 
+                        alt="Foto Antes" 
+                        className="w-full h-40 object-cover rounded-lg shadow"
+                      />
+                    </div>
+                  )}
+                  {content.photos.during && (
+                    <div>
+                      <p className="text-sm font-semibold mb-1">Durante:</p>
+                      <img 
+                        src={content.photos.during} 
+                        alt="Foto Durante" 
+                        className="w-full h-40 object-cover rounded-lg shadow"
+                      />
+                    </div>
+                  )}
+                  {content.photos.after && (
+                    <div>
+                      <p className="text-sm font-semibold mb-1">Después:</p>
+                      <img 
+                        src={content.photos.after} 
+                        alt="Foto Después" 
+                        className="w-full h-40 object-cover rounded-lg shadow"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </>
         )}
 
