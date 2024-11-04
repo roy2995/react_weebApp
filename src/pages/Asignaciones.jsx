@@ -78,29 +78,38 @@ const Assignments = () => {
   const handleSubmit = async () => {
     try {
       const token = localStorage.getItem('token');
-      userBuckets.forEach(async (assignment) => {
+      const today = new Date().toISOString().slice(0, 10);
+
+      // Create progress_buckets entries for each assignment
+      for (const assignment of userBuckets) {
         const { user_id, bucket_id } = assignment;
-        const response = await fetch(`https://webapi-f01g.onrender.com/api/user_buckets/${user_id}`, {
-          method: 'PUT',
+        
+        const response = await fetch('https://webapi-f01g.onrender.com/api/progress_buckets', {
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ bucket_id }),
+          body: JSON.stringify({
+            bucket_id: parseInt(bucket_id),
+            status: "0",
+            user_id: parseInt(user_id),
+            date: today
+          }),
         });
 
         if (!response.ok) {
-          console.error(`Error updating assignment for user ${user_id}:`, response.status);
-        } else {
-          console.log(`Assignment updated successfully for user ${user_id}`);
+          throw new Error(`Error creating assignment for user ${user_id}`);
         }
-      });
+        
+        console.log(`Assignment created successfully for user ${user_id} with bucket ${bucket_id}`);
+      }
 
-      alert('Assignments updated successfully');
-      window.location.reload(); // Refrescar la página después de enviar
+      alert('Assignments created successfully');
+      window.location.reload();
     } catch (error) {
-      console.error('Error updating assignments:', error);
-      alert('Error updating assignments');
+      console.error('Error creating assignments:', error);
+      alert('Error creating assignments');
     }
   };
 
