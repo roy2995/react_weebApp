@@ -32,8 +32,12 @@ const Assignments = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
-      if (response.ok) setBuckets(data.body);
-      console.log("Buckets fetched:", data.body);
+      if (response.ok) {
+        // Filter buckets to only include those with Terminal "Albrook Mall"
+        const filteredBuckets = data.body.filter(bucket => bucket.Terminal === "Albrook Mall");
+        setBuckets(filteredBuckets);
+      }
+      console.log("Filtered Buckets fetched:", filteredBuckets);
     } catch (error) {
       console.error('Error fetching buckets:', error);
     }
