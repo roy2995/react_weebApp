@@ -1038,22 +1038,16 @@ const CleaningService = () => {
           throw new Error('No hay registros de asignaciones');
         }
 
-        // Get today's date in YYYY-MM-DD format
-        const today = new Date().toISOString().slice(0, 10);
-        console.log('Today:', today);
+        // Get the latest assignment by sorting all assignments by date and ID
+        const sortedAssignments = progressData.body.sort((a, b) => {
+          // First compare dates
+          const dateComparison = new Date(b.date) - new Date(a.date);
+          if (dateComparison !== 0) return dateComparison;
+          // If dates are equal, compare IDs
+          return b.id - a.id;
+        });
 
-        // Filter assignments for today and sort by ID to get the latest
-        const todayAssignments = progressData.body
-          .filter(assignment => assignment.date === today)
-          .sort((a, b) => b.id - a.id);
-
-        console.log('Today assignments:', todayAssignments);
-
-        if (todayAssignments.length === 0) {
-          throw new Error('No hay asignaciones para hoy');
-        }
-
-        const latestAssignment = todayAssignments[0];
+        const latestAssignment = sortedAssignments[0];
         console.log('Latest assignment:', latestAssignment);
 
         // Get bucket data for the latest assignment
@@ -1077,13 +1071,11 @@ const CleaningService = () => {
         console.log('All tasks:', tasksData.body);
         
         // Filter tasks matching the current bucket type
-        const filteredTasks = tasksData.body.filter(task => {
-          console.log('Comparing task type:', task.Type, 'with bucket type:', currentBucket.Tipo);
-          return task.Type === currentBucket.Tipo;
-        });
+        const filteredTasks = tasksData.body.filter(task => 
+          task.Type.toString() === currentBucket.Tipo.toString()
+        );
         
         console.log('Filtered tasks:', filteredTasks);
-        
         setTasks(filteredTasks);
         localStorage.setItem('tasks', JSON.stringify(filteredTasks));
 
