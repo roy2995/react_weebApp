@@ -1011,9 +1011,9 @@ const CleaningService = () => {
           return;
         }
 
-        // Obtener bucket del usuario
-        const userBucketResponse = await fetch(
-          `${API_BASE_URL}/user_buckets?user_id=${userId}`,
+        // First, get all progress_buckets for this user
+        const progressResponse = await fetch(
+          `${API_BASE_URL}/progress_buckets?user_id=${userId}`,
           { 
             headers: { 
               Authorization: `Bearer ${token}`,
@@ -1022,28 +1022,39 @@ const CleaningService = () => {
           }
         );
         
-        const userBucketData = await userBucketResponse.json();
-        console.log('User bucket data:', userBucketData);
+        const progressData = await progressResponse.json();
+        console.log('Progress buckets data:', progressData);
         
-        if (!userBucketData.body || userBucketData.body.length === 0) {
-          throw new Error('No se encontró bucket asignado');
+        if (!progressData.body || progressData.body.length === 0) {
+          throw new Error('No hay registros de asignaciones');
         }
 
-        const bucketId = userBucketData.body[0].bucket_id;
+        // Sort progress_buckets by date to get the latest assignment
+        const sortedProgress = progressData.body.sort((a, b) => 
+          new Date(b.date) - new Date(a.date)
+        );
+        
+        const latestAssignment = sortedProgress[0];
+        console.log('Latest assignment:', latestAssignment);
 
-        // Cargar datos del bucket
+        // Get bucket data for the latest assignment
         const bucketResponse = await fetch(
-          `${API_BASE_URL}/buckets/${bucketId}`,
+          `${API_BASE_URL}/buckets/${latestAssignment.bucket_id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         
         const bucketData = await bucketResponse.json();
         console.log('Bucket data:', bucketData);
         
-        setArea(bucketData.body[0]);
-        localStorage.setItem('area', JSON.stringify(bucketData.body[0]));
+        if (!bucketData.body || bucketData.body.length === 0) {
+          throw new Error('No se encontró información del área asignada');
+        }
 
-        // Cargar tareas
+        const currentArea = bucketData.body[0];
+        setArea(currentArea);
+        localStorage.setItem('area', JSON.stringify(currentArea));
+
+        // Load tasks for this area type
         const tasksResponse = await fetch(
           `${API_BASE_URL}/tasks`,
           { headers: { Authorization: `Bearer ${token}` } }
@@ -1052,8 +1063,9 @@ const CleaningService = () => {
         const tasksData = await tasksResponse.json();
         console.log('Tasks data:', tasksData);
         
+        // Filter tasks based on the current area type
         const filteredTasks = tasksData.body.filter(
-          task => task.Type.toString() === bucketData.body[0].Tipo.toString()
+          task => task.Type.toString() === currentArea.Tipo.toString()
         );
         
         setTasks(filteredTasks);
